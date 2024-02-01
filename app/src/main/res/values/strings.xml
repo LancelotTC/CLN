@@ -1,0 +1,7 @@
+<resources>
+    <string name="app_name">CLN</string>
+    <string name="plant_label">Poser une plante</string>
+    <string name="tree_label">Poser un arbre</string>
+    <string name="filter_label">Poser un filtre</string>
+    <string name="terrain_label">Poser un terrain</string>
+</resources>
