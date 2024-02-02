@@ -8,6 +8,8 @@ import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
+import android.graphics.Matrix;
+import android.graphics.Point;
 import android.graphics.drawable.Drawable;
 import android.location.Geocoder;
 import android.location.Location;
@@ -17,6 +19,8 @@ import androidx.annotation.NonNull;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
+import com.example.cln.Models.Model;
+import com.example.cln.Models.Plant;
 import com.example.cln.R;
 import com.example.cln.Storers.LocalAccess;
 import com.google.android.gms.location.FusedLocationProviderClient;
@@ -40,13 +44,15 @@ public class MapController {
     private GoogleMap googleMap;
     private boolean locationPermissionGranted;
     private Location lastKnownLocation;
+    private LocalAccess localAccess;
 
     // Sole context is MainActivity since the map is only present in said activity, so it's fine
     // to store it in the controller
-    private Context context;
+    private final Context context;
 
     private MapController(Context context) {
         this.context = context;
+        localAccess = LocalAccess.getInstance(context);
         getLocationPermission();
     }
 
@@ -54,7 +60,6 @@ public class MapController {
         if (instance == null) {
             instance = new MapController(context);
         }
-
         return instance;
     }
 
@@ -64,29 +69,44 @@ public class MapController {
 
     }
 
-    public void addMapMarkerToCurrentLocation(String title, int ressourceId) {
-        addMapMarker(new LatLng(lastKnownLocation.getLatitude(), lastKnownLocation.getLongitude()), title, ressourceId);
+    public void addMapMarkerToCurrentLocation(String title, int resourceId) {
+        addMapMarker(getCurrentLocation(), title, resourceId);
+    }
+    public void addMapMarkerToCurrentScreenLocation(String title, int resourceId) {
+        addMapMarker(getCurrentScreenLocation(), title, resourceId);
     }
 
-    public void addMapMarker(float latitude, float longitude, String title, int ressourceId) {
-        addMapMarker(new LatLng(latitude, longitude), title, ressourceId);
-    }
-    public void addMapMarker(double latitude, double longitude, String title, int ressourceId) {
-        addMapMarker(new LatLng(latitude, longitude), title, ressourceId);
+    public LatLng getCurrentScreenLocation() {
+        int mWidth= context.getResources().getDisplayMetrics().widthPixels;
+        int mHeight= context.getResources().getDisplayMetrics().heightPixels;
+
+        return googleMap.getProjection().fromScreenLocation(new Point(mWidth, mHeight));
     }
 
+    @NonNull
+    public LatLng getCurrentLocation() {
+        return new LatLng(lastKnownLocation.getLatitude(), lastKnownLocation.getLongitude());
+    }
+
+    public void addMapMarker(float latitude, float longitude, String title, int resourceId) {
+        addMapMarker(new LatLng(latitude, longitude), title, resourceId);
+    }
+    public void addMapMarker(double latitude, double longitude, String title, int resourceId) {
+        addMapMarker(new LatLng(latitude, longitude), title, resourceId);
+    }
+
+    @NonNull
     private BitmapDescriptor bitmapDescriptorFromVector(int vectorResId) {
         Drawable vectorDrawable = ContextCompat.getDrawable(context, vectorResId);
         assert vectorDrawable != null;
         vectorDrawable.setBounds(0, 0, vectorDrawable.getIntrinsicWidth(), vectorDrawable.getIntrinsicHeight());
         Bitmap bitmap = Bitmap.createBitmap(vectorDrawable.getIntrinsicWidth(), vectorDrawable.getIntrinsicHeight(), Bitmap.Config.ARGB_8888);
-        Log.d("Bitmap size", bitmap.getWidth() + " : " + bitmap.getHeight());
 
-        Canvas canvas = new Canvas(bitmap);
-//        Matrix matrix = new Matrix();
-//        matrix.postScale(.9F, .9F);
-//        Canvas canvas = new Canvas(Bitmap.createBitmap(bitmap, 0, 0, 336, 336,
-//                matrix, false));
+//        Canvas canvas = new Canvas(bitmap);
+        Matrix matrix = new Matrix();
+        matrix.postScale(.9F, .9F);
+        Canvas canvas = new Canvas(Bitmap.createBitmap(bitmap, 0, 0, 336, 336,
+                matrix, false));
 
 
         vectorDrawable.draw(canvas);
@@ -102,8 +122,12 @@ public class MapController {
         return Bitmap.createScaledBitmap(imageBitmap, 50, 50, false);
     }
 
+    public void addEntry(Model model) {
+        localAccess.addEntry(model);
+        addMapMarker(model.getLatLng(), model.getLabel(), model.getRessourceId());
+    }
 
-    public void addMapMarker(LatLng latLng, String title, int ressourceId) {
+    public void addMapMarker(LatLng latLng, String title, int resourceId) {
         MarkerOptions markerOptions = new MarkerOptions();
 
         markerOptions.position(latLng);
@@ -116,23 +140,21 @@ public class MapController {
         marker.setDraggable(true);
         //        marker.setIcon(BitmapDescriptorFactory.fromResource(R.drawable.plant_icon));
 
-        marker.setIcon(bitmapDescriptorFromVector(ressourceId));
+        marker.setIcon(bitmapDescriptorFromVector(resourceId));
     }
-
     public void moveToCurrentLocation() {
         if (lastKnownLocation == null) {
             return;
         }
 
-        moveCamera(new LatLng(lastKnownLocation.getLatitude(),
-                lastKnownLocation.getLongitude()), 30);
+        moveCamera(getCurrentLocation(), 30);
     }
 
     public void moveCamera(LatLng latLng, int zoom) {
-        googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, zoom));
+        googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng, zoom));
     }
     public void moveCamera(LatLng latLng) {
-        googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, 30));
+        moveCamera(latLng, 30);
     }
 
     public void requestLastKnownLocation() {
@@ -148,7 +170,7 @@ public class MapController {
                         if (task.isSuccessful()) {
                             // Set the map's camera position to the current location of the device.
                             lastKnownLocation = task.getResult();
-                            moveToCurrentLocation();
+//                            moveToCurrentLocation();
 
                         } else {
                             Log.d("INFO", "Current location is null. Using defaults.");

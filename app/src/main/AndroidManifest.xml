@@ -30,6 +30,10 @@
             android:name=".NewPlantActivity"
             android:exported="false"
             android:parentActivityName=".MainActivity"/>
+        <activity
+            android:name=".NewTreeActivity"
+            android:exported="false"
+            android:parentActivityName=".MainActivity"/>
         <meta-data
             android:name="com.google.android.geo.API_KEY"
             android:value="AIzaSyD0C5D4W1bBgvsaoq9fjwLAnLFr7sUQARw" />

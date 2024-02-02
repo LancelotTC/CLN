@@ -18,12 +18,15 @@ public class Controller {
         return instance;
     }
 
-    public void addMapMarker(GoogleMap googleMap, float latitude, float longitude, String title) {
-        addMapMarker(googleMap, new LatLng(latitude, longitude), title);
+    public void addMapMarker(GoogleMap googleMap, float latitude, float longitude, String title,
+                             int ressourceId) {
+        addMapMarker(googleMap, new LatLng(latitude, longitude), title, ressourceId);
     }
 
-    public void addMapMarker(GoogleMap googleMap, LatLng latLng, String title) {
-        googleMap.addMarker(new MarkerOptions().position(latLng).title("Maison"));
+    public void addMapMarker(GoogleMap googleMap, LatLng latLng, String title, int ressourceId) {
+        MarkerOptions marker = new MarkerOptions();
+        marker.position(latLng).title(title);
+        googleMap.addMarker(marker);
     }
 
 

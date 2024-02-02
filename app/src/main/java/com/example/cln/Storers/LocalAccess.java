@@ -4,6 +4,10 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.util.Log;
+
+import com.example.cln.Models.Model;
+import com.example.cln.Models.Plant;
 
 /**
  * Classe exploitant MySQLiteOpenHelper pour manipuler la bdd au format SQLite
@@ -23,8 +27,6 @@ public class LocalAccess {
      */
     private LocalAccess(Context context){
         dbAccess = new MySQLiteOpenHelper(context, dbName, dbVersion);
-        dbAccess.getWritableDatabase();
-        dbAccess.close();
     }
 
     /**
@@ -33,16 +35,22 @@ public class LocalAccess {
      * @return instance unique de la classe
      */
     public static LocalAccess getInstance(Context context){
-        if(instance == null){
+        if(instance == null) {
             instance = new LocalAccess(context);
         }
         return instance;
     }
 
+    public void addEntry(Model model) {
+        db = dbAccess.getWritableDatabase();
+        db.insert(model.getTableName(), null, model.getContentValues());
+        db.close();
+    }
+
     /**
      * Adds a Point
      */
-    public void addPoint(Double[] coords){
+    public void addPoint(Double[] coords) {
         db = dbAccess.getWritableDatabase();
 
         ContentValues values = new ContentValues();
@@ -54,10 +62,6 @@ public class LocalAccess {
         db.close();
     }
 
-    /**
-     * Récupération du dernier profil enregistré dans la bdd
-     * @return dernier profil
-     */
     public Double[] recupDernier(){
         Double[] coords = null;
         db = dbAccess.getReadableDatabase();
@@ -80,5 +84,15 @@ public class LocalAccess {
 
     public void getNextRegionPoints() {
 
+    }
+
+    public String select() {
+        db = dbAccess.getReadableDatabase();
+        Cursor cursor = db.rawQuery("select * from plant", null);
+        String s = cursor.getString(1);
+        cursor.close();
+        db.close();
+//        return "not a value just ignore this";
+        return s;
     }
 }
