@@ -8,6 +8,9 @@ import android.util.Log;
 
 import com.example.cln.Models.Model;
 import com.example.cln.Models.Plant;
+import com.google.android.gms.maps.model.LatLng;
+
+import java.util.ArrayList;
 
 /**
  * Classe exploitant MySQLiteOpenHelper pour manipuler la bdd au format SQLite
@@ -44,6 +47,7 @@ public class LocalAccess {
     public void addEntry(Model model) {
         db = dbAccess.getWritableDatabase();
         db.insert(model.getTableName(), null, model.getContentValues());
+        Log.d("Database", "Inserted " + model.getLabel());
         db.close();
     }
 
@@ -94,5 +98,22 @@ public class LocalAccess {
         db.close();
 //        return "not a value just ignore this";
         return s;
+    }
+
+    public Model[] retrieveEntries() {
+        db = dbAccess.getReadableDatabase();
+        Cursor cursor = db.rawQuery("select * from plant", null);
+        ArrayList<Model> entries = new ArrayList<>();
+        cursor.moveToLast();
+        while (!cursor.isAfterLast()) {
+            String label = cursor.getString(1);
+            LatLng latLng = new LatLng(cursor.getDouble(2), cursor.getDouble(3));
+            int nbLeaves = cursor.getInt(4);
+            int growthState = cursor.getInt(5);
+            entries.add(new Plant(label, latLng, nbLeaves, growthState));
+        }
+        cursor.close();
+        db.close();
+        return entries.toArray(new Model[0]);
     }
 }

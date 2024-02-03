@@ -20,7 +20,6 @@ import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
 import com.example.cln.Models.Model;
-import com.example.cln.Models.Plant;
 import com.example.cln.R;
 import com.example.cln.Storers.LocalAccess;
 import com.google.android.gms.location.FusedLocationProviderClient;
@@ -44,7 +43,6 @@ public class MapController {
     private GoogleMap googleMap;
     private boolean locationPermissionGranted;
     private Location lastKnownLocation;
-    private LocalAccess localAccess;
 
     // Sole context is MainActivity since the map is only present in said activity, so it's fine
     // to store it in the controller
@@ -52,7 +50,6 @@ public class MapController {
 
     private MapController(Context context) {
         this.context = context;
-        localAccess = LocalAccess.getInstance(context);
         getLocationPermission();
     }
 
@@ -80,7 +77,11 @@ public class MapController {
         int mWidth= context.getResources().getDisplayMetrics().widthPixels;
         int mHeight= context.getResources().getDisplayMetrics().heightPixels;
 
-        return googleMap.getProjection().fromScreenLocation(new Point(mWidth, mHeight));
+        Log.d("ScreeLoc", mWidth + " " + mHeight);
+
+
+//        return googleMap.getProjection().fromScreenLocation(new Point(mWidth, mHeight));
+        return googleMap.getCameraPosition().target;
     }
 
     @NonNull
@@ -100,13 +101,19 @@ public class MapController {
         Drawable vectorDrawable = ContextCompat.getDrawable(context, vectorResId);
         assert vectorDrawable != null;
         vectorDrawable.setBounds(0, 0, vectorDrawable.getIntrinsicWidth(), vectorDrawable.getIntrinsicHeight());
-        Bitmap bitmap = Bitmap.createBitmap(vectorDrawable.getIntrinsicWidth(), vectorDrawable.getIntrinsicHeight(), Bitmap.Config.ARGB_8888);
+        Bitmap bitmap = Bitmap.createBitmap(vectorDrawable.getIntrinsicWidth(),
+                vectorDrawable.getIntrinsicHeight(), Bitmap.Config.ARGB_8888);
+//        Bitmap bitmap = Bitmap.createScaledBitmap(
+//                Bitmap.createBitmap(vectorDrawable.getIntrinsicWidth(),
+//                        vectorDrawable.getIntrinsicHeight(), Bitmap.Config.ARGB_8888),
+//                50, 50,
+//                true
+//        );
 
 //        Canvas canvas = new Canvas(bitmap);
         Matrix matrix = new Matrix();
         matrix.postScale(.9F, .9F);
-        Canvas canvas = new Canvas(Bitmap.createBitmap(bitmap, 0, 0, 336, 336,
-                matrix, false));
+        Canvas canvas = new Canvas(bitmap);
 
 
         vectorDrawable.draw(canvas);
@@ -120,11 +127,6 @@ public class MapController {
         Bitmap bitmap = Bitmap.createBitmap(vectorDrawable.getIntrinsicWidth(), vectorDrawable.getIntrinsicHeight(), Bitmap.Config.ARGB_8888);
         Bitmap imageBitmap = BitmapFactory.decodeResource(context.getResources(), R.drawable.plant_icon);
         return Bitmap.createScaledBitmap(imageBitmap, 50, 50, false);
-    }
-
-    public void addEntry(Model model) {
-        localAccess.addEntry(model);
-        addMapMarker(model.getLatLng(), model.getLabel(), model.getRessourceId());
     }
 
     public void addMapMarker(LatLng latLng, String title, int resourceId) {
@@ -185,11 +187,6 @@ public class MapController {
     }
 
     public void getLocationPermission() {
-        /*
-         * Request location permission, so that we can get the location of the
-         * device. The result of the permission request is handled by a callback,
-         * onRequestPermissionsResult.
-         */
         if (ContextCompat.checkSelfPermission(context.getApplicationContext(),
                 android.Manifest.permission.ACCESS_FINE_LOCATION)
                 == PackageManager.PERMISSION_GRANTED) {
@@ -201,13 +198,9 @@ public class MapController {
         }
     }
 
-    public void simulateClickOnMap() {
-
-    }
-
-    public void addCustomLocation(Context context) {
-        Geocoder geocoder = new Geocoder(context);
-    }
+//    public void addCustomLocation(Context context) {
+//        Geocoder geocoder = new Geocoder(context);
+//    }
 
     public Polygon addPolygon(PolygonOptions rectOptions) {
         return googleMap.addPolygon(rectOptions);
@@ -218,5 +211,9 @@ public class MapController {
 
         localAccess.getNextRegionPoints();
 
+    }
+
+    public void addMapMarker(Model model) {
+        addMapMarker(model.getLatLng(), model.getLabel(), model.getResourceId());
     }
 }

@@ -10,7 +10,7 @@ public interface Model {
         return null;
     }
 
-    public default Integer getRessourceId() {
+    public default Integer getResourceId() {
         return null;
     }
 

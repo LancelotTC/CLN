@@ -41,7 +41,7 @@ public class Tree implements Model {
         return longitude;
     }
 
-    public Integer getRessourceId() {
+    public Integer getResourceId() {
         return id;
     }
 

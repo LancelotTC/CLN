@@ -11,7 +11,7 @@ public class Plant implements Model {
     private final Double longitude;
     private final Integer growthState;
     private final Integer leafAmount;
-    private final Integer id = R.drawable.plant_icon;
+    private final Integer resourceId = R.drawable.plant_icon;
 
     public Plant(String label, Double latitude, Double longitude, Integer growthState, Integer leafAmount) {
         this.label = label;
@@ -23,7 +23,7 @@ public class Plant implements Model {
     public Plant(String label, LatLng latLng, Integer growthState, Integer leafAmount) {
             this(label,latLng.latitude, latLng.latitude, growthState, leafAmount);
         }
-
+    @Deprecated
     public String getSQLInsertQuery() {
         return "insert into plant (label, latitude, longitude, growth_state_id, leaf_amount) values ('" +
                 getLabel() + "', " + getLatitude() + ", " + getLongitude()  +
@@ -53,8 +53,8 @@ public class Plant implements Model {
     public Integer getLeafAmount() {
         return leafAmount;
     }
-    public Integer getRessourceId() {
-        return id;
+    public Integer getResourceId() {
+        return resourceId;
     }
     public String getTableName() {
         return "plant";

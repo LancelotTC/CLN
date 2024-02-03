@@ -3,6 +3,7 @@ package com.example.cln;
 import android.app.Dialog;
 import android.content.Context;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.Adapter;
 import android.widget.AdapterView;
@@ -12,23 +13,30 @@ import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.Spinner;
 
+import androidx.annotation.IdRes;
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.example.cln.Controllers.Controller;
 import com.example.cln.Controllers.MapController;
 import com.example.cln.Models.Plant;
 
 public class NewPlantActivity extends AppCompatActivity {
-    private MapController mapController;
+//    private MapController mapController;
 
+    private Controller controller;
     private EditText txtPlantName;
     private Spinner spinnerGrowthState;
     private EditText txtNbFeuilles;
-    private Button btnOk;
+    private Button btnOkPlant;
+    private Button btnCancelPlant;
+    private Dialog dialog;
 
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        Log.d("created", "NewPlantActivity");
+
         setContentView(R.layout.activity_new_plant);
         setGlobals();
         ArrayAdapter<String> itemsAdapter = new ArrayAdapter<>(this, R.layout.spinner_list_layout, new String[]{
@@ -44,22 +52,32 @@ public class NewPlantActivity extends AppCompatActivity {
 
     }
 
+
     private void setGlobals() {
-        txtPlantName = findViewById(R.id.txtPlantName);
-        spinnerGrowthState = findViewById(R.id.spinnerGrowthState);
-        txtNbFeuilles = findViewById(R.id.txtNbFeuilles);
-        btnOk = findViewById(R.id.btnCancelPlant);
+        dialog = CurrentDialog.getDialog();
+
+        controller = Controller.getInstance(this);
+
+        txtPlantName = dialog.findViewById(R.id.txtPlantName);
+        spinnerGrowthState = dialog.findViewById(R.id.spinnerGrowthState);
+        txtNbFeuilles = dialog.findViewById(R.id.txtNbFeuilles);
+        btnOkPlant = dialog.findViewById(R.id.btnOkPlant);
+        btnCancelPlant = dialog.findViewById(R.id.btnCancelPlant);
 
     }
 
     protected void setListeners() {
-        btnOk.setOnClickListener(v -> {
+
+        btnOkPlant.setOnClickListener(v -> {
+            Log.d("Click", "clicked on ok plant");
             MapController mapController = MapController.getInstance(this);
-            Plant plant = new Plant(txtPlantName.getText().toString(),
-                    mapController.getCurrentScreenLocation(), 1,
-                    Integer.parseInt(txtNbFeuilles.getText().toString()));
-            mapController.addMapMarker(mapController.getCurrentScreenLocation(),
-                    txtPlantName.getText().toString(), R.drawable.plant_icon);
+            String label = ((EditText)findViewById(R.id.txtPlantName)).getText().toString();
+
+            Plant plant = new Plant(label,
+                    mapController.getCurrentScreenLocation(), 1, 0);
+
+            controller.addEntry(plant);
         });
+//        btnCancelPlant.setOnClickListener(v -> dialog.dismiss());
     }
 }

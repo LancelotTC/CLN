@@ -17,6 +17,7 @@ import android.content.res.ColorStateList;
 import android.content.res.Resources;
 import android.os.Build;
 import android.os.Bundle;
+import android.util.Log;
 import android.util.TypedValue;
 import android.view.Display;
 import android.view.DisplayCutout;
@@ -32,6 +33,7 @@ import android.widget.LinearLayout;
 
 import com.example.cln.Controllers.Controller;
 import com.example.cln.Controllers.MapController;
+import com.example.cln.Models.Plant;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
@@ -42,14 +44,12 @@ import com.google.android.material.shape.MaterialShapeDrawable;
 import com.google.android.material.shape.ShapeAppearanceModel;
 
 import java.util.HashMap;
+import java.util.Objects;
 
 public class MainActivity extends AppCompatActivity implements OnMapReadyCallback, androidx.core.view.OnApplyWindowInsetsListener {
     private Controller controller;
     private MapController mapController;
-    private ConstraintLayout navView;
-    private EditText txtSearch;
     private Window window;
-    private Display display;
 
 
 //    @SuppressLint("MissingInflatedId")
@@ -58,15 +58,18 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        deleteDatabase("bdCoach.sqlite");
+//        deleteDatabase("bdCoach.sqlite");
 
         // set global variables
-        setGlobals();
+        controller = Controller.getInstance(this);
+        mapController = MapController.getInstance(this);
+        window = getWindow();
+
+        controller.retrieveEntries();
 
         // set widget listeners
-        setListener(findViewById(R.id.btnPlant), findViewById(R.id.btnCancelPlant),
-                R.layout.activity_new_plant);
-
+//        setListener(findViewById(R.id.btnPlant), R.layout.activity_new_plant);
+        setListeners();
 //        setListener(findViewById(R.id.btnTree), findViewById(R.id.btnCancelPlant),
 //                R.layout.activity_new_tree);
 //
@@ -75,9 +78,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 //
 //        setListener(findViewById(R.id.btnComposter), findViewById(R.id.btnCancelPlant),
 //                R.layout.activity_new_composter);
-
-
-
 
         ViewCompat.setOnApplyWindowInsetsListener(window.getDecorView(), this);
 
@@ -92,35 +92,47 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_IMMERSIVE);
     }
 
-    protected void setGlobals() {
-        controller = Controller.getInstance();
-        mapController = MapController.getInstance(this);
-        window = getWindow();
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            display = getDisplay();
-        }
-
-        navView = findViewById(R.id.navView);
-        txtSearch = findViewById(R.id.txtSearch);
-    }
-
-    @Deprecated
     protected void setListeners() {
-        ListenerManager.setPlantListener(
-                findViewById(R.id.btnPlant),
-                ((EditText)findViewById(R.id.txtPlantName)).getText().toString(),
-                0,
-                0,
-                findViewById(R.id.btnOkPlant),
-                findViewById(R.id.btnCancelPlant),
-                R.drawable.plant_icon,
-                R.layout.activity_new_plant,
-                this
-        );
+        findViewById(R.id.btnPlant).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Dialog dialog = new Dialog(MainActivity.this);
 
+                Animator scale = ObjectAnimator.ofPropertyValuesHolder(v,
+                        PropertyValuesHolder.ofFloat(View.SCALE_X, 1, .9f, 1),
+                        PropertyValuesHolder.ofFloat(View.SCALE_Y, 1, .9f, 1)
+                );
+                scale.setDuration(500);
+                scale.start();
+
+                dialog.setContentView(R.layout.activity_new_plant);
+                dialog.show();
+                dialog.findViewById(R.id.btnOkPlant).setOnClickListener(view -> {
+                    Log.d("Click", "clicked on ok plant");
+                    MapController mapController = MapController.getInstance(MainActivity.this);
+                    String label = ((EditText)dialog.findViewById(R.id.txtPlantName)).getText().toString();
+
+                    Plant plant = new Plant(label,
+                            mapController.getCurrentScreenLocation(), 1, 0);
+
+                    controller.addEntry(plant);
+                    dialog.dismiss();
+
+                });
+                dialog.findViewById(R.id.btnCancelPlant).setOnClickListener(new View.OnClickListener() {
+                     @Override
+                     public void onClick(View v) {
+                         dialog.dismiss();
+                     }
+                });
+
+            }
+
+        });
     }
-    protected void setListener(LinearLayout btnMain, Button btnCancel, int targetActivityId) {
+    protected void setListener(LinearLayout btnMain, int targetActivityId) {
         Dialog dialog = new Dialog(this);
+        CurrentDialog.setDialog(dialog);
 
         btnMain.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -150,7 +162,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             WindowInsets windowInsets = window.getDecorView().getRootWindowInsets();
 
             RoundedCorner roundedCorners = windowInsets.getRoundedCorner(RoundedCorner.POSITION_TOP_LEFT);
-            DisplayCutout displayCutout = display.getCutout();
+
+            DisplayCutout displayCutout = Objects.requireNonNull(getDisplay()).getCutout();
 
             assert roundedCorners != null;
             assert displayCutout != null;
@@ -175,7 +188,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             txtSearchshapeDrawable.setFillColor(ColorStateList.valueOf(color));
             navViewshapeDrawable.setFillColor(ColorStateList.valueOf(color));
 
-
+            ConstraintLayout navView = findViewById(R.id.navView);
+            EditText txtSearch = findViewById(R.id.txtSearch);
 
             txtSearch.setBackground(txtSearchshapeDrawable);
             navView.setBackground(navViewshapeDrawable);
