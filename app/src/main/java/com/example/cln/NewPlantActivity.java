@@ -12,6 +12,7 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.Spinner;
+import android.widget.Toast;
 
 import androidx.annotation.IdRes;
 import androidx.appcompat.app.AppCompatActivity;
@@ -21,9 +22,9 @@ import com.example.cln.Controllers.MapController;
 import com.example.cln.Models.Plant;
 
 public class NewPlantActivity extends AppCompatActivity {
-//    private MapController mapController;
 
     private Controller controller;
+
     private EditText txtPlantName;
     private Spinner spinnerGrowthState;
     private EditText txtNbFeuilles;
@@ -33,27 +34,22 @@ public class NewPlantActivity extends AppCompatActivity {
 
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
+    public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        Log.d("created", "NewPlantActivity");
 
         setContentView(R.layout.activity_new_plant);
+        Log.d("created", "plant activity created");
         setGlobals();
-        ArrayAdapter<String> itemsAdapter = new ArrayAdapter<>(this, R.layout.spinner_list_layout, new String[]{
-                "Petit soldat",
-                "Papillon",
-                "Feuilles"
-        });
-
-        spinnerGrowthState.setAdapter(itemsAdapter);
-        spinnerGrowthState.setOnItemSelectedListener((AdapterView.OnItemSelectedListener) this);
 
         setListeners();
-
     }
 
+    @Override
+    protected void onStart() {
+        super.onStart();
+    }
 
-    private void setGlobals() {
+    protected void setGlobals() {
         dialog = CurrentDialog.getDialog();
 
         controller = Controller.getInstance(this);
@@ -63,10 +59,11 @@ public class NewPlantActivity extends AppCompatActivity {
         txtNbFeuilles = dialog.findViewById(R.id.txtNbFeuilles);
         btnOkPlant = dialog.findViewById(R.id.btnOkPlant);
         btnCancelPlant = dialog.findViewById(R.id.btnCancelPlant);
-
     }
 
     protected void setListeners() {
+        Log.d("listen", "Setting listeners");
+
 
         btnOkPlant.setOnClickListener(v -> {
             Log.d("Click", "clicked on ok plant");
@@ -76,8 +73,9 @@ public class NewPlantActivity extends AppCompatActivity {
             Plant plant = new Plant(label,
                     mapController.getCurrentScreenLocation(), 1, 0);
 
-            controller.addEntry(plant);
+//            controller.addEntry(plant);
+
         });
-//        btnCancelPlant.setOnClickListener(v -> dialog.dismiss());
+
     }
 }

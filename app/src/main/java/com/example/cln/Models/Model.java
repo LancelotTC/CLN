@@ -1,29 +1,40 @@
 package com.example.cln.Models;
 
-import android.content.ContentValues;
-
 import com.google.android.gms.maps.model.LatLng;
 
-public interface Model {
+public class Model implements ModelInterface {
+    private long id;
+    private final String label;
+    private LatLng latLng;
 
-    public default String getSQLInsertQuery() {
-        return null;
+
+    public Model(String label, LatLng latLng) {
+        this.label = label;
+        this.latLng = latLng;
     }
 
-    public default Integer getResourceId() {
-        return null;
+    @Override
+    public void setId(long id) {
+        this.id = id;
     }
 
-    public default LatLng getLatLng() {
-        return null;
+    @Override
+    public long getId() {
+        return id;
     }
-    public default String getLabel() {
-        return null;
+
+    @Override
+    public String getLabel() {
+        return label;
     }
-    public default String getTableName() {
-        return null;
+
+    @Override
+    public LatLng getLatLng() {
+        return latLng;
     }
-    public default ContentValues getContentValues() {
-        return null;
+
+    @Override
+    public void setLatLng(LatLng latLng) {
+        this.latLng = latLng;
     }
 }

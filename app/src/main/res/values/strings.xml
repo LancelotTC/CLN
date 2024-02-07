@@ -4,4 +4,11 @@
     <string name="tree_label">Poser un arbre</string>
     <string name="filter_label">Poser un filtre</string>
     <string name="composter_label">Poser un composteur</string>
+    <string name="create_item_label">Poser</string>
+
+    <string-array name="plant_growth">
+        <item>Petit soldat</item>
+        <item>Papillon</item>
+        <item>Feuilles…</item>
+    </string-array>
 </resources>

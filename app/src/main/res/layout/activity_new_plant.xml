@@ -10,7 +10,7 @@
         android:layout_height="match_parent"
         android:background="?colorPrimary"
         android:padding="25dp"
-        tools:layout_editor_absoluteX="25dp">
+        app:layout_constraintStart_toStartOf="parent">
 
         <TextView
             android:id="@+id/textView"
@@ -42,7 +42,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="25dp"
-            android:visibility="gone"
+            android:entries="@array/plant_growth"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="@+id/linearLayout" />
@@ -112,12 +112,13 @@
                 android:layout_height="wrap_content"
                 android:backgroundTint="?colorOnPrimary"
                 android:clickable="true"
-                android:text="Poser"
+                android:text="@string/create_item_label"
                 android:textColor="?colorPrimary"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toStartOf="@+id/btnCancelPlant"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent" />
+                app:layout_constraintTop_toTopOf="parent"
+                android:focusable="true" />
 
             <Button
                 android:id="@+id/btnCancelPlant"
@@ -130,7 +131,8 @@
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toEndOf="@+id/btnOkPlant"
-                app:layout_constraintTop_toTopOf="parent" />
+                app:layout_constraintTop_toTopOf="parent"
+                android:focusable="true" />
         </androidx.constraintlayout.widget.ConstraintLayout>
 
     </androidx.constraintlayout.widget.ConstraintLayout>

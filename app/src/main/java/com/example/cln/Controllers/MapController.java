@@ -9,9 +9,7 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Matrix;
-import android.graphics.Point;
 import android.graphics.drawable.Drawable;
-import android.location.Geocoder;
 import android.location.Location;
 import android.util.Log;
 
@@ -19,7 +17,7 @@ import androidx.annotation.NonNull;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
-import com.example.cln.Models.Model;
+import com.example.cln.Models.ModelInterface;
 import com.example.cln.R;
 import com.example.cln.Storers.LocalAccess;
 import com.google.android.gms.location.FusedLocationProviderClient;
@@ -40,9 +38,13 @@ import java.util.Objects;
 
 public class MapController {
     private static MapController instance;
+    private Controller controller;
     private GoogleMap googleMap;
     private boolean locationPermissionGranted;
     private Location lastKnownLocation;
+//    private boolean currentLocationRequested = false;
+//    private boolean currentLocationAvailable = false;
+
 
     // Sole context is MainActivity since the map is only present in said activity, so it's fine
     // to store it in the controller
@@ -50,6 +52,7 @@ public class MapController {
 
     private MapController(Context context) {
         this.context = context;
+        controller = Controller.getInstance(context);
         getLocationPermission();
     }
 
@@ -129,7 +132,7 @@ public class MapController {
         return Bitmap.createScaledBitmap(imageBitmap, 50, 50, false);
     }
 
-    public void addMapMarker(LatLng latLng, String title, int resourceId) {
+    public Marker addMapMarker(LatLng latLng, String title, int resourceId) {
         MarkerOptions markerOptions = new MarkerOptions();
 
         markerOptions.position(latLng);
@@ -140,9 +143,31 @@ public class MapController {
 
         Marker marker = Objects.requireNonNull(googleMap.addMarker(markerOptions));
         marker.setDraggable(true);
+        googleMap.setOnMarkerDragListener(new GoogleMap.OnMarkerDragListener() {
+            @Override
+            public void onMarkerDrag(@NonNull Marker marker) {
+
+            }
+
+            @Override
+            public void onMarkerDragEnd(@NonNull Marker marker) {
+//                Log.d("marker", Objects.requireNonNull(marker.getTitle()));
+                ModelInterface model = controller.getModel(marker.getId());
+
+                model.setLatLng(marker.getPosition());
+                controller.updateModel(model);
+
+            }
+
+            @Override
+            public void onMarkerDragStart(@NonNull Marker marker) {
+
+            }
+        });
         //        marker.setIcon(BitmapDescriptorFactory.fromResource(R.drawable.plant_icon));
 
         marker.setIcon(bitmapDescriptorFromVector(resourceId));
+        return marker;
     }
     public void moveToCurrentLocation() {
         if (lastKnownLocation == null) {
@@ -151,7 +176,6 @@ public class MapController {
 
         moveCamera(getCurrentLocation(), 30);
     }
-
     public void moveCamera(LatLng latLng, int zoom) {
         googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng, zoom));
     }
@@ -172,7 +196,8 @@ public class MapController {
                         if (task.isSuccessful()) {
                             // Set the map's camera position to the current location of the device.
                             lastKnownLocation = task.getResult();
-//                            moveToCurrentLocation();
+                            Log.d("lastKnownLocation", lastKnownLocation.getLatitude() + " " + lastKnownLocation.getLongitude());
+                            moveToCurrentLocation();
 
                         } else {
                             Log.d("INFO", "Current location is null. Using defaults.");
@@ -213,7 +238,7 @@ public class MapController {
 
     }
 
-    public void addMapMarker(Model model) {
+    public void addMapMarker(ModelInterface model) {
         addMapMarker(model.getLatLng(), model.getLabel(), model.getResourceId());
     }
 }
