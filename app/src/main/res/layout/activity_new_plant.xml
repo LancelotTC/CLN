@@ -1,140 +1,113 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    android:layout_width="wrap_content"
-    android:layout_height="wrap_content">
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="?colorPrimary"
+    android:gravity="center"
+    android:orientation="vertical"
+    android:padding="50dp">
 
-    <androidx.constraintlayout.widget.ConstraintLayout
+    <TextView
+        android:id="@+id/textView"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:background="?colorPrimary"
-        android:padding="25dp"
-        app:layout_constraintStart_toStartOf="parent">
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:gravity="center"
+        android:text="Poser une plante"
+        android:textColor="?colorOnPrimary"
+        android:textSize="30sp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
 
-        <TextView
-            android:id="@+id/textView"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Poser une plante"
-            android:textColor="?colorOnPrimary"
-            android:textSize="30sp"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
+    <EditText
+        android:id="@+id/txtPlantName"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_marginTop="25dp"
+        android:layout_weight="1"
+        android:ems="10"
+        android:hint="Nom"
+        android:inputType="text"
+        android:textColor="?colorOnPrimary"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHeight_min="48dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/textView" />
 
-        <EditText
-            android:id="@+id/txtPlantName"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="25dp"
-            android:ems="10"
-            android:hint="Nom"
-            android:inputType="text"
-            android:textColor="?colorOnPrimary"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintHeight_min="48dp"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/textView" />
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:orientation="horizontal">
 
         <Spinner
             android:id="@+id/spinnerGrowthState"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_height="match_parent"
             android:layout_marginTop="25dp"
-            android:entries="@array/plant_growth"
-            app:layout_constraintEnd_toEndOf="parent"
+            android:layout_weight="1"
+            android:entries="@array/plant_growth" />
+
+        <EditText
+            android:id="@+id/txtNbFeuilles"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:layout_weight="2"
+            android:autofillHints=""
+            android:ems="10"
+            android:hint="Quantité"
+            android:inputType="number|numberDecimal"
+            android:visibility="gone" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/constraintLayout2"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="25dp"
+        android:gravity="center|center_horizontal"
+        android:orientation="horizontal"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="1.0"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/spinnerGrowthState"
+        app:layout_constraintVertical_bias="1.0">
+
+        <Button
+            android:id="@+id/btnOkPlant"
+            style="?android:attr/buttonBarButtonStyle"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:backgroundTint="?colorOnPrimary"
+            android:clickable="true"
+            android:focusable="true"
+            android:text="@string/create_item_label"
+            android:textColor="?colorPrimary"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toStartOf="@+id/btnCancelPlant"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="@+id/linearLayout" />
+            app:layout_constraintTop_toTopOf="parent" />
 
-        <LinearLayout
-            android:id="@+id/linearLayout"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="25dp"
-            android:divider="@drawable/empty_wide_divider"
-            android:gravity="center|center_horizontal|center_vertical"
-            android:isScrollContainer="true"
-            android:orientation="vertical"
-            android:scrollbars="vertical"
-            android:visibility="gone"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/txtPlantName">
+        <Button
+            android:id="@+id/btnCancelPlant"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
 
-            <Button
-                android:id="@+id/btnOptPlantPetitSoldat"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="Petit soldat" />
-
-            <Button
-                android:id="@+id/btnOptPlantPapillon"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="Papillon" />
-
-            <Button
-                android:id="@+id/btnOptPlantFeuilles"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="Feuilles..." />
-
-            <EditText
-                android:id="@+id/txtNbFeuilles"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:width="10sp"
-                android:ems="10"
-                android:hint="N° feuilles"
-                android:inputType="text"
-                android:minHeight="48dp" />
-        </LinearLayout>
-
-        <androidx.constraintlayout.widget.ConstraintLayout
-            android:id="@+id/constraintLayout2"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="25dp"
+            android:background="@drawable/button_border"
+            android:clickable="true"
+            android:focusable="true"
+            android:text="Annuler"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintHorizontal_bias="1.0"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/spinnerGrowthState"
-            app:layout_constraintVertical_bias="1.0">
+            app:layout_constraintStart_toEndOf="@+id/btnOkPlant"
+            app:layout_constraintTop_toTopOf="parent"
 
-            <Button
-                android:id="@+id/btnOkPlant"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:backgroundTint="?colorOnPrimary"
-                android:clickable="true"
-                android:text="@string/create_item_label"
-                android:textColor="?colorPrimary"
-                app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintEnd_toStartOf="@+id/btnCancelPlant"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent"
-                android:focusable="true" />
-
-            <Button
-                android:id="@+id/btnCancelPlant"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:background="@drawable/button_border"
-                android:clickable="true"
-
-                android:text="Annuler"
-                app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toEndOf="@+id/btnOkPlant"
-                app:layout_constraintTop_toTopOf="parent"
-                android:focusable="true" />
-        </androidx.constraintlayout.widget.ConstraintLayout>
-
-    </androidx.constraintlayout.widget.ConstraintLayout>
-
-</androidx.constraintlayout.widget.ConstraintLayout>
+            />
+    </LinearLayout>
+</LinearLayout>

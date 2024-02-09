@@ -1,44 +1,38 @@
 package com.example.cln;
 
-import androidx.annotation.ColorInt;
-import androidx.annotation.NonNull;
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.constraintlayout.widget.ConstraintLayout;
-import androidx.constraintlayout.widget.ConstraintSet;
-import androidx.core.view.ViewCompat;
-import androidx.core.view.WindowInsetsCompat;
-
 import android.animation.Animator;
-import android.animation.ObjectAnimator;
-import android.animation.PropertyValuesHolder;
-import android.annotation.SuppressLint;
-import android.app.Dialog;
-
-import android.content.Context;
+import android.animation.AnimatorSet;
 import android.content.res.ColorStateList;
 import android.content.res.Resources;
-import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
 import android.util.TypedValue;
-import android.view.Display;
 import android.view.DisplayCutout;
 import android.view.RoundedCorner;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.ViewParent;
 import android.view.ViewStub;
 import android.view.Window;
 import android.view.WindowInsets;
 import android.view.WindowManager;
+import android.view.animation.Animation;
+import android.view.animation.AnimationSet;
+import android.view.animation.Interpolator;
+import android.view.animation.ScaleAnimation;
+import android.view.animation.TranslateAnimation;
 import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
-import android.widget.Button;
 import android.widget.EditText;
 import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.Spinner;
-import android.widget.Toast;
+import android.widget.Switch;
+import android.widget.TextView;
+
+import androidx.annotation.ColorInt;
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
 
 import com.example.cln.Controllers.Controller;
 import com.example.cln.Controllers.MapController;
@@ -46,6 +40,7 @@ import com.example.cln.Models.Composter;
 import com.example.cln.Models.Filter;
 import com.example.cln.Models.Plant;
 import com.example.cln.Models.Tree;
+
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
@@ -55,8 +50,6 @@ import com.google.android.material.shape.CornerFamily;
 import com.google.android.material.shape.MaterialShapeDrawable;
 import com.google.android.material.shape.ShapeAppearanceModel;
 
-import java.util.Arrays;
-import java.util.HashMap;
 import java.util.Objects;
 
 public class MainActivity extends AppCompatActivity implements OnMapReadyCallback,
@@ -64,19 +57,20 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private Controller controller;
     private MapController mapController;
     private Window window;
+
+    private EditText txtSearch;
     private FrameLayout navView;
     private LinearLayout foldedNavView;
     private FrameLayout expandedNavView;
-    private ViewStub plantStub;
+
+    private View inflatedInfo;
+
     private View inflatedPlant;
-    private ViewStub treeStub;
     private View inflatedTree;
-    private ViewStub filterStub;
     private View inflatedFilter;
-    private ViewStub composterStub;
     private View inflatedComposter;
 
-    private View[] inflats;
+    private View[] allInflated;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -85,19 +79,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         // set global variables
         defineGlobals();
-
-
-        // set widget listeners
-//        setListener(findViewById(R.id.btnPlant), R.layout.activity_new_plant);
-        setListeners();
-//        setListener(findViewById(R.id.btnTree), findViewById(R.id.btnCancelPlant),
-//                R.layout.activity_new_tree);
-//
-//        setListener(findViewById(R.id.btnFilter), findViewById(R.id.btnCancelPlant),
-//                R.layout.activity_new_filter);
-//
-//        setListener(findViewById(R.id.btnComposter), findViewById(R.id.btnCancelPlant),
-//                R.layout.activity_new_composter);
 
         ViewCompat.setOnApplyWindowInsetsListener(window.getDecorView(), this);
 
@@ -112,32 +93,33 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_IMMERSIVE);
     }
 
+
+    /**
+     * Defines all global variables in MainActivity
+     */
     private void defineGlobals() {
         controller = Controller.getInstance(this);
         mapController = MapController.getInstance(this);
+
         window = getWindow();
+
+        txtSearch = findViewById(R.id.txtSearch);
 
         navView = findViewById(R.id.navView);
         foldedNavView = findViewById(R.id.foldedNavView);
         expandedNavView = findViewById(R.id.expandedNavView);
 
-        plantStub = findViewById(R.id.plantStub);
-        plantStub.setLayoutResource(R.layout.activity_new_plant);
-        inflatedPlant = plantStub.inflate();
+        inflatedInfo = ((ViewStub)findViewById(R.id.infoStub)).inflate();
 
-        treeStub = findViewById(R.id.treeStub);
-        treeStub.setLayoutResource(R.layout.activity_new_tree);
-        inflatedTree = treeStub.inflate();
+        inflatedPlant = ((ViewStub)findViewById(R.id.plantStub)).inflate();
 
-        filterStub = findViewById(R.id.filterStub);
-        filterStub.setLayoutResource(R.layout.activity_new_filter);
-        inflatedFilter = filterStub.inflate();
+        inflatedTree = ((ViewStub)findViewById(R.id.treeStub)).inflate();
 
-        composterStub = findViewById(R.id.composterStub);
-        composterStub.setLayoutResource(R.layout.activity_new_composter);
-        inflatedComposter = composterStub.inflate();
+        inflatedFilter = ((ViewStub)findViewById(R.id.filterStub)).inflate();
 
-        inflats = new View[] {
+        inflatedComposter = ((ViewStub)findViewById(R.id.composterStub)).inflate();
+
+        allInflated = new View[] {
                 inflatedPlant,
                 inflatedTree,
                 inflatedFilter,
@@ -145,16 +127,39 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         };
     }
 
+    /**
+     * Expands the navigation bar to make the newly visible UI fit
+     */
     protected void expandNavView() {
 
-        ResizeAnimation resizeAnimation = new ResizeAnimation(
-                navView,
-                navView.getHeight()*2,
-//                ViewGroup.LayoutParams.WRAP_CONTENT,
-                navView.getHeight()
-        );
+        AnimationSet animationSet = new AnimationSet(true);
 
+        Animation translateAnimation = new TranslateAnimation(0, 0, 0,
+                Math.round(txtSearch.getY() - navView.getY()));
+        translateAnimation.setDuration(300);
+        animationSet.addAnimation(translateAnimation);
+
+
+        Animation resizeAnimation = new ScaleAnimation(1, 1, 1, 2);
         resizeAnimation.setDuration(300);
+        animationSet.addAnimation(resizeAnimation);
+
+        animationSet.setInterpolator(new Interpolator() {
+            @Override
+            public float getInterpolation(float input) {
+                return 0;
+            }
+        });
+
+
+//        ResizeAnimation resizeAnimation = new ResizeAnimation(
+//                navView,
+//                navView.getHeight()*3,
+////                ViewGroup.LayoutParams.WRAP_CONTENT,
+//                navView.getHeight()
+//        );
+
+//        resizeAnimation.setDuration(300);
 
         foldedNavView.setVisibility(View.GONE);
         expandedNavView.setVisibility(View.VISIBLE);
@@ -162,20 +167,21 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
 //        Button btnCancel = inflated.findViewById(R.id.btnCancelPlant);
 //        btnCancel.setOnClickListener(v -> foldNavView());
-        navView.setAnimation(resizeAnimation);
-        navView.startAnimation(resizeAnimation);
-        ConstraintSet constraintSet = new ConstraintSet();
-//        constraintSet.clone((ConstraintLayout) findViewById(ConstraintSet.PARENT_ID));
-        constraintSet.connect(navView.getId(), ConstraintSet.TOP, ConstraintSet.PARENT_ID,
-                ConstraintSet.TOP, 0);
+        navView.setAnimation(animationSet);
+        navView.startAnimation(animationSet);
+
     }
+
+    /**
+     * Folds the navigation bar to fit the navigation buttons.
+     */
     protected void foldNavView() {
         foldedNavView.setVisibility(View.VISIBLE);
         expandedNavView.setVisibility(View.GONE);
 
         ResizeAnimation resizeAnimation = new ResizeAnimation(
                 navView,
-                navView.getHeight()/2,
+                navView.getHeight()/3,
 //                ViewGroup.LayoutParams.WRAP_CONTENT,
                 navView.getHeight()
         );
@@ -186,32 +192,43 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         navView.startAnimation(resizeAnimation);
     }
 
+    /**
+     * Makes all inflated views invisible and makes the passed in inflated View visible.
+     * @param inflated
+     */
     protected void toggleVisibility(View inflated) {
-        for (View view : inflats) {
+        for (View view : allInflated) {
             view.setVisibility(View.INVISIBLE);
         }
         inflated.setVisibility(View.VISIBLE);
     }
 
+    /**
+     * Sets (almost) all UI related listeners, mainly buttons
+     */
     protected void setListeners() {
         findViewById(R.id.btnPlant).setOnClickListener(v -> {
 
             expandNavView();
             toggleVisibility(inflatedPlant);
+            Spinner spinner = inflatedPlant.findViewById(R.id.spinnerGrowthState);
+            spinner.setOnItemSelectedListener(this);
+
 
             inflatedPlant.findViewById(R.id.btnOkPlant).setOnClickListener(view -> {
                 MapController mapController = MapController.getInstance(MainActivity.this);
                 String label = ((EditText)inflatedPlant.findViewById(R.id.txtPlantName)).getText().toString();
-                Spinner spinner = inflatedPlant.findViewById(R.id.spinnerGrowthState);
-                ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(this,
-                        R.array.plant_growth, R.layout.activity_new_plant);
-//                adapter.setDropDownViewResource(R.layout.activity_new_plant);
 
-                spinner.setAdapter(adapter);
-                spinner.setOnItemSelectedListener(this);
+                int nbFeuilles = 0;
+
+                try {
+                    nbFeuilles = Integer.parseInt(((TextView) findViewById(R.id.txtNbFeuilles))
+                            .getText().toString());
+                } catch (NumberFormatException ignored) {}
+
 
                 Plant plant = new Plant(label,
-                        mapController.getCurrentLocation(), 1, 0);
+                        mapController.getCurrentScreenLocation(), spinner.getSelectedItemPosition(), nbFeuilles);
 
                 controller.addEntry(plant);
 
@@ -225,7 +242,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         });
 
         findViewById(R.id.btnTree).setOnClickListener(v -> {
-            treeStub.setLayoutResource(R.layout.activity_new_tree);
 
             expandNavView();
             toggleVisibility(inflatedTree);
@@ -249,8 +265,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         });
 
         findViewById(R.id.btnFilter).setOnClickListener(v -> {
-            filterStub.setLayoutResource(R.layout.activity_new_filter);
-
             inflatedFilter.setVisibility(View.INVISIBLE);
 
             expandNavView();
@@ -275,9 +289,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         });
 
         findViewById(R.id.btnComposter).setOnClickListener(v -> {
-            composterStub.setLayoutResource(R.layout.activity_new_composter);
-
-
             expandNavView();
             toggleVisibility(inflatedComposter);
 
@@ -298,32 +309,31 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 foldNavView();
             });
         });
-    }
-    protected void setListener(LinearLayout btnMain, int targetActivityId) {
-        Dialog dialog = new Dialog(this);
-        CurrentDialog.setDialog(dialog);
 
-        btnMain.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Animator scale = ObjectAnimator.ofPropertyValuesHolder(v,
-                        PropertyValuesHolder.ofFloat(View.SCALE_X, 1, .9f, 1),
-                        PropertyValuesHolder.ofFloat(View.SCALE_Y, 1, .9f, 1)
-                );
-                scale.setDuration(500);
-                scale.start();
-                dialog.setContentView(targetActivityId);
-                dialog.show();
+        inflatedInfo.findViewById(R.id.btnInfoUpdate).setOnClickListener(v -> {
+            String label = ((EditText)inflatedInfo.findViewById(R.id.txtInfoName)).getText().toString();
 
-            }
+            boolean draggable = !((Switch)inflatedInfo.findViewById(R.id.switchInfoDraggable)).isChecked();
+
+
+            controller.updateEntry(mapController.getSelectedMarker(), label, draggable);
+            foldNavView();
+
         });
-//        btnCancel.setOnClickListener(new View.OnClickListener() {
-//            @Override
-//            public void onClick(View v) {
-//                dialog.dismiss();
-//            }
-//        });
+
+        inflatedInfo.findViewById(R.id.btnInfoCancel).setOnClickListener(v -> {
+            foldNavView();
+        });
     }
+
+    /**
+     * Method that makes sure the navigation bar has rounded corners that fit the device's and that
+     * the search bar isn't under the camera cutout
+     *
+     * @param v      The view applying window insets
+     * @param insets The insets to apply
+     * @return
+     */
     @NonNull
     @Override
     public WindowInsetsCompat onApplyWindowInsets(@NonNull View v, @NonNull WindowInsetsCompat insets) {
@@ -366,7 +376,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             ViewGroup.MarginLayoutParams layoutParams = (ViewGroup.MarginLayoutParams) txtSearch.getLayoutParams();
             layoutParams.topMargin = displayCutout.getSafeInsetTop() + 25;
             txtSearch.setLayoutParams(layoutParams);
-
         }
 
         return insets;
@@ -376,32 +385,66 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
      * Prompts the user for permission to use the device location.
      */
 
+    /**
+     * Method that is called once the map is ready. Repopulates the map and sets map-related listeners.
+     * @param googleMap
+     */
     @Override
     public void onMapReady(@NonNull GoogleMap googleMap) {
+        setListeners();
 
-        googleMap.setMapStyle(MapStyleOptions.loadRawResourceStyle(this, R.raw.map_retro));
-        googleMap.setOnMapClickListener(new GoogleMap.OnMapClickListener() {
-            @Override
-            public void onMapClick(@NonNull LatLng latLng) {
-//                mapController.addMapMarker(latLng, "placeholder");
-            }
-        });
+        googleMap.setMapStyle(MapStyleOptions.loadRawResourceStyle(this, R.raw.map_night));
 
         mapController.setMap(googleMap);
-//        mapController.addEntry(new Plant("Second plant", 14.65395925, -61.00704925, 1, 1));
-//        mapController.moveCamera(new LatLng(14.65370598, -61.00744924), 30);
 
         controller.retrieveEntries();
 
         mapController.moveToCurrentLocation();
+
+
+        // Opens up a update menu on marker clicked.
+        mapController.setOnMarkerClickListener(m -> {
+            toggleVisibility(inflatedInfo);
+            expandNavView();
+            ((TextView)inflatedInfo.findViewById(R.id.txtInfoLabel)).setText(
+                    (CharSequence) (Objects.requireNonNull(m.getTitle()).isEmpty() ? "Untitled" : m.getTitle())
+            );
+
+            ((EditText)inflatedInfo.findViewById(R.id.txtInfoName)).setText(
+                    (CharSequence) (Objects.requireNonNull(m.getTitle()).isEmpty() ? "Untitled" : m.getTitle())
+            );
+
+            ((Switch) inflatedInfo.findViewById(R.id.switchInfoDraggable)).setChecked(
+                    !m.isDraggable()
+            );
+        });
+        // Folds the menu back to the navigation buttons on map clicked (exits the marker update menu)
+        Lambda task = this::foldNavView;
+        mapController.setOnMapClickListener(task);
     }
 
+    /**
+     * When trying to add a Plant to the map, user has the ability to choose a plant growth state.
+     * The Feuilles... choice requires the user to specify the quantity. This method allows that.
+     * @param parent The AdapterView where the selection happened
+     * @param view The view within the AdapterView that was clicked
+     * @param position The position of the view in the adapter
+     * @param id The row id of the item that is selected
+     */
     @Override
     public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-        Toast.makeText(this, (CharSequence) parent.getItemAtPosition(position), Toast.LENGTH_SHORT).show();
-
+//        Toast.makeText(this, (CharSequence) (position + " " + id), Toast.LENGTH_SHORT).show();
+        if (position == 2) {
+            findViewById(R.id.txtNbFeuilles).setVisibility(View.VISIBLE);
+        } else {
+            findViewById(R.id.txtNbFeuilles).setVisibility(View.GONE);
+        }
     }
 
+    /**
+     * Have to implement this empty method lest it won't work
+     * @param parent The AdapterView that now contains no selected item.
+     */
     @Override
     public void onNothingSelected(AdapterView<?> parent) {
 

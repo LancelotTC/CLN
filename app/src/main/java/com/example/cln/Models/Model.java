@@ -3,8 +3,8 @@ package com.example.cln.Models;
 import com.google.android.gms.maps.model.LatLng;
 
 public class Model implements ModelInterface {
-    private long id;
-    private final String label;
+    private Long id;
+    private String label;
     private LatLng latLng;
 
 
@@ -14,18 +14,22 @@ public class Model implements ModelInterface {
     }
 
     @Override
-    public void setId(long id) {
+    public void setId(Long id) {
         this.id = id;
     }
 
     @Override
-    public long getId() {
+    public Long getId() {
         return id;
     }
 
     @Override
     public String getLabel() {
         return label;
+    }
+
+    public void setLabel(String label) {
+        this.label = label;
     }
 
     @Override

@@ -3,12 +3,17 @@
     <string name="plant_label">Poser une plante</string>
     <string name="tree_label">Poser un arbre</string>
     <string name="filter_label">Poser un filtre</string>
-    <string name="composter_label">Poser un composteur</string>
+    <string name="composter_label">Poser un\ncomposteur</string>
     <string name="create_item_label">Poser</string>
 
+
+    <string name="growth_state_1">Petit soldat</string>
+    <string name="growth_state_2">Papillon</string>
+    <string name="growth_state_3">Feuilles…</string>
+
     <string-array name="plant_growth">
-        <item>Petit soldat</item>
-        <item>Papillon</item>
-        <item>Feuilles…</item>
+        <item name="growth_state_1">@string/growth_state_1</item>
+        <item name="growth_state_2">@string/growth_state_2</item>
+        <item name="growth_state_3">@string/growth_state_3</item>
     </string-array>
 </resources>

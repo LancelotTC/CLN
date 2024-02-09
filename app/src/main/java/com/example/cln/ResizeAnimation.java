@@ -29,8 +29,4 @@ public class ResizeAnimation extends Animation {
         super.initialize(width, height, parentWidth, parentHeight);
     }
 
-    @Override
-    public boolean willChangeBounds() {
-        return true;
-    }
 }

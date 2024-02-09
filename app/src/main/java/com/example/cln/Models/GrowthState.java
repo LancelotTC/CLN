@@ -1,8 +1,17 @@
 package com.example.cln.Models;
 
+import com.example.cln.R;
+
+
 public class GrowthState {
-    static Integer state1 = 0;
-    static Integer state2 = 1;
-    static Integer state3 = 2;
-    static Integer state4 = 3;
+    static Integer PETIT_SOLDAT = 0;
+    static Integer PAPILLON = 1;
+    static Integer FEUILLES = 2;
+
+//    public static int getGrowthState(String name) {
+//        switch (name) {
+////            case (R.string.growth_state_1):
+//
+//        }
+//    }
 }

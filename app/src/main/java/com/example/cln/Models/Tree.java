@@ -16,7 +16,7 @@ public class Tree extends Model {
     }
 
     public String getTableName() {
-        return "tree";
+        return "fruit_tree";
     }
     public ContentValues getContentValues() {
         ContentValues contentValues = new ContentValues();

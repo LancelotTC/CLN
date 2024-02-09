@@ -6,10 +6,10 @@ import com.google.android.gms.maps.model.LatLng;
 
 public interface ModelInterface {
 
-    public default long getId() {
-        return -1;
+    public default Long getId() {
+        return (long) -1;
     }
-    public default void setId(long id) {
+    public default void setId(Long id) {
         return;
     };
 
@@ -29,6 +29,7 @@ public interface ModelInterface {
     public default String getLabel() {
         return null;
     }
+    public default void setLabel() {}
     public default String getTableName() {
         return null;
     }

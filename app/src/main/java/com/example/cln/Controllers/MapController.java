@@ -9,17 +9,20 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Matrix;
+import android.graphics.Point;
 import android.graphics.drawable.Drawable;
 import android.location.Location;
+import android.os.Build;
 import android.util.Log;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
-import com.example.cln.Models.ModelInterface;
+import com.example.cln.Models.Model;
 import com.example.cln.R;
-import com.example.cln.Storers.LocalAccess;
+import com.example.cln.Lambda;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.CameraUpdateFactory;
@@ -35,10 +38,10 @@ import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 
 import java.util.Objects;
+import java.util.function.Consumer;
 
 public class MapController {
     private static MapController instance;
-    private Controller controller;
     private GoogleMap googleMap;
     private boolean locationPermissionGranted;
     private Location lastKnownLocation;
@@ -50,9 +53,10 @@ public class MapController {
     // to store it in the controller
     private final Context context;
 
+    private Marker selectedMarker = null;
+
     private MapController(Context context) {
         this.context = context;
-        controller = Controller.getInstance(context);
         getLocationPermission();
     }
 
@@ -60,13 +64,38 @@ public class MapController {
         if (instance == null) {
             instance = new MapController(context);
         }
+
         return instance;
+    }
+
+    private void setListeners() {
+        googleMap.setOnMarkerDragListener(new GoogleMap.OnMarkerDragListener() {
+            @Override
+            public void onMarkerDrag(@NonNull Marker marker) {
+                // Perhaps show live coordinates
+            }
+
+            @Override
+            public void onMarkerDragEnd(@NonNull Marker marker) {
+                Controller.getInstance(context).updateModel(marker);
+            }
+
+            @Override
+            public void onMarkerDragStart(@NonNull Marker marker) {
+                // Move UI elements out of the way
+            }
+        });
     }
 
     public void setMap(GoogleMap googleMap) {
         this.googleMap = googleMap;
         requestLastKnownLocation();
+        setListeners();
+    }
 
+    public Marker getSelectedMarker() {
+        Log.d("selectedMarker", "Attempted to get selectedMarker" + selectedMarker);
+        return selectedMarker;
     }
 
     public void addMapMarkerToCurrentLocation(String title, int resourceId) {
@@ -77,26 +106,17 @@ public class MapController {
     }
 
     public LatLng getCurrentScreenLocation() {
-        int mWidth= context.getResources().getDisplayMetrics().widthPixels;
-        int mHeight= context.getResources().getDisplayMetrics().heightPixels;
+        int mWidth = context.getResources().getDisplayMetrics().widthPixels;
+        int mHeight = context.getResources().getDisplayMetrics().heightPixels;
 
-        Log.d("ScreeLoc", mWidth + " " + mHeight);
-
-
-//        return googleMap.getProjection().fromScreenLocation(new Point(mWidth, mHeight));
-        return googleMap.getCameraPosition().target;
+        // return googleMap.getProjection().fromScreenLocation(new Point(mWidth, mHeight));
+        // return googleMap.getCameraPosition().target;
+        return googleMap.getProjection().getVisibleRegion().latLngBounds.getCenter();
     }
 
     @NonNull
     public LatLng getCurrentLocation() {
         return new LatLng(lastKnownLocation.getLatitude(), lastKnownLocation.getLongitude());
-    }
-
-    public void addMapMarker(float latitude, float longitude, String title, int resourceId) {
-        addMapMarker(new LatLng(latitude, longitude), title, resourceId);
-    }
-    public void addMapMarker(double latitude, double longitude, String title, int resourceId) {
-        addMapMarker(new LatLng(latitude, longitude), title, resourceId);
     }
 
     @NonNull
@@ -123,7 +143,7 @@ public class MapController {
         return BitmapDescriptorFactory.fromBitmap(bitmap);
     }
 
-    public Bitmap resizeMapIcon() {
+    private Bitmap resizeMapIcon() {
         Drawable vectorDrawable = ContextCompat.getDrawable(context, R.drawable.plant_icon);
         assert vectorDrawable != null;
         vectorDrawable.setBounds(0, 0, vectorDrawable.getIntrinsicWidth(), vectorDrawable.getIntrinsicHeight());
@@ -143,42 +163,25 @@ public class MapController {
 
         Marker marker = Objects.requireNonNull(googleMap.addMarker(markerOptions));
         marker.setDraggable(true);
-        googleMap.setOnMarkerDragListener(new GoogleMap.OnMarkerDragListener() {
-            @Override
-            public void onMarkerDrag(@NonNull Marker marker) {
 
-            }
-
-            @Override
-            public void onMarkerDragEnd(@NonNull Marker marker) {
-//                Log.d("marker", Objects.requireNonNull(marker.getTitle()));
-                ModelInterface model = controller.getModel(marker.getId());
-
-                model.setLatLng(marker.getPosition());
-                controller.updateModel(model);
-
-            }
-
-            @Override
-            public void onMarkerDragStart(@NonNull Marker marker) {
-
-            }
-        });
         //        marker.setIcon(BitmapDescriptorFactory.fromResource(R.drawable.plant_icon));
 
         marker.setIcon(bitmapDescriptorFromVector(resourceId));
         return marker;
     }
+
     public void moveToCurrentLocation() {
         if (lastKnownLocation == null) {
             return;
         }
 
-        moveCamera(getCurrentLocation(), 30);
+        moveCamera(getCurrentLocation());
     }
+
     public void moveCamera(LatLng latLng, int zoom) {
         googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng, zoom));
     }
+
     public void moveCamera(LatLng latLng) {
         moveCamera(latLng, 30);
     }
@@ -196,7 +199,6 @@ public class MapController {
                         if (task.isSuccessful()) {
                             // Set the map's camera position to the current location of the device.
                             lastKnownLocation = task.getResult();
-                            Log.d("lastKnownLocation", lastKnownLocation.getLatitude() + " " + lastKnownLocation.getLongitude());
                             moveToCurrentLocation();
 
                         } else {
@@ -232,13 +234,44 @@ public class MapController {
     }
 
     public void drawBoundaries() {
-        LocalAccess localAccess = LocalAccess.getInstance(context);
+        DatabaseController databaseController = DatabaseController.getInstance(context);
 
-        localAccess.getNextRegionPoints();
+        databaseController.getNextRegionPoints();
 
     }
 
-    public void addMapMarker(ModelInterface model) {
-        addMapMarker(model.getLatLng(), model.getLabel(), model.getResourceId());
+    public Marker addMapMarker(Model model) {
+        return addMapMarker(model.getLatLng(), model.getLabel(), model.getResourceId());
+    }
+
+    public void updateMarker(Marker marker, String label, boolean draggable) {
+        marker.setTitle(label);
+        marker.setDraggable(draggable);
+    }
+
+    public void setOnMarkerClickListener(Consumer<Marker> consumer) {
+        googleMap.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {
+            @Override
+            public boolean onMarkerClick(@NonNull Marker marker) {
+
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                    consumer.accept(marker);
+                    selectedMarker = marker;
+                    Log.d("selectedMarker", "Assigned marker");
+                }
+                return false;
+            }
+        });
+    }
+
+    public void setOnMapClickListener(Lambda func) {
+        googleMap.setOnMapClickListener(new GoogleMap.OnMapClickListener() {
+            @Override
+            public void onMapClick(@NonNull LatLng latLng) {
+                Toast.makeText(context, (CharSequence) "test", Toast.LENGTH_SHORT).show();
+                func.run();
+                selectedMarker = null;
+            }
+        });
     }
 }

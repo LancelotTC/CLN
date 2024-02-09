@@ -1,6 +1,7 @@
 package com.example.cln.Models;
 
 import android.content.ContentValues;
+import android.util.Log;
 
 import com.example.cln.R;
 import com.google.android.gms.maps.model.LatLng;
