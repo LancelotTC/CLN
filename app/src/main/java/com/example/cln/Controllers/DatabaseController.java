@@ -4,7 +4,6 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Build;
-import android.util.Log;
 
 import com.example.cln.Models.Composter;
 import com.example.cln.Models.Filter;
@@ -31,14 +30,11 @@ public class DatabaseController {
     private final MySQLiteOpenHelper dbAccess;
     private static DatabaseController instance;
     private SQLiteDatabase db;
-    private Integer regionId;
     private final HashMap<Long, Model> objectToMarker;
-//    private final ArrayList<Model> markerModel;
 
     private DatabaseController(Context context) {
         dbAccess = new MySQLiteOpenHelper(context, dbName, dbVersion);
         objectToMarker = new HashMap<>();
-//        markerModel = new ArrayList<>();
     }
 
     public static DatabaseController getInstance(Context context){
@@ -65,22 +61,6 @@ public class DatabaseController {
         model.setId(id);
         marker.setTag(id);
         addModel((Long) marker.getTag(), model);
-    }
-
-
-    public Double[] getLastPlant() {
-        Double[] coords = new Double[2];
-        db = dbAccess.getReadableDatabase();
-        String req = "select * from plant";
-        Cursor cursor = db.rawQuery(req, null);
-        cursor.moveToLast();
-        if (!cursor.isAfterLast()){
-            coords[0] = cursor.getDouble(2);
-            coords[1] = cursor.getDouble(3);
-        }
-        cursor.close();
-        db.close();
-        return coords;
     }
 
     @Deprecated
@@ -143,10 +123,6 @@ public class DatabaseController {
         tableToFunction.put("composter", this::buildComposter);
 
         return tableToFunction.get(table);
-    }
-
-    private Function<Cursor, Model> buildModel(String table) {
-        return getModelBuilder(table);
     }
 
     public List<Model> getAll(String table) {

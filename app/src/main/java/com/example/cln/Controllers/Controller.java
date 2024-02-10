@@ -1,13 +1,9 @@
 package com.example.cln.Controllers;
 
 import android.content.Context;
-import android.util.Log;
 
 import com.example.cln.Models.Model;
-import com.example.cln.Lambda;
 import com.google.android.gms.maps.model.Marker;
-
-import java.util.function.Consumer;
 
 public class Controller {
     private static Controller instance;
@@ -28,7 +24,7 @@ public class Controller {
     }
 
     public void addEntry(Model model) {
-        Marker marker = mapController.addMapMarker(model.getLatLng(), model.getLabel(), model.getResourceId());
+        Marker marker = mapController.addMapMarker(model);
         databaseController.addEntry(model, marker);
     }
 
@@ -54,20 +50,6 @@ public class Controller {
 
     public Model getModel(Long id) {
         return databaseController.getModel(id);
-    }
-
-    public void showMarkerInfo(Marker marker) {
-        Model model = getModel((Long) marker.getTag());
-        // show information screen
-    }
-
-    public void setOnMarkerClickListener(Consumer<Marker> consumer) {
-        mapController.setOnMarkerClickListener(consumer);
-    }
-
-    public void setOnMapClickListener(Lambda func) {
-        mapController.setOnMapClickListener(func);
-
     }
 
     public void updateEntry(Marker marker, String label, boolean draggable) {
