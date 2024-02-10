@@ -12,7 +12,8 @@
         android:id="@+id/fragmentMap"
         android:name="com.google.android.gms.maps.SupportMapFragment"
         android:layout_width="match_parent"
-        android:layout_height="match_parent" />
+        android:layout_height="match_parent"
+        android:paddingTop="25dp" />
 
     <EditText
         android:id="@+id/txtSearch"
@@ -27,6 +28,7 @@
         android:ems="10"
         android:gravity="center_vertical"
         android:hint="Rechercher"
+
         android:inputType="text"
         android:paddingStart="20dp"
         android:paddingTop="10dp"
@@ -39,41 +41,18 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
-    <requestFocus android:id="@+id/requestFocus" />
-
-    <LinearLayout
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        android:layout_marginStart="125dp"
-        android:layout_marginTop="50dp"
-        android:layout_marginEnd="125dp"
-        android:layout_marginBottom="500dp"
-        android:background="#FF0000"
-        android:clickable="true"
-        android:focusable="true"
-        android:focusableInTouchMode="true"
-        android:visibility="gone"
-        app:layout_constraintBottom_toBottomOf="@+id/fragmentMap"
-        app:layout_constraintEnd_toEndOf="@+id/fragmentMap"
-        app:layout_constraintHeight_max="150dp"
-        app:layout_constraintStart_toStartOf="@+id/fragmentMap"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintWidth_max="150dp">
-
-    </LinearLayout>
-
     <FrameLayout
         android:id="@+id/navView"
         android:layout_width="0dp"
-        android:layout_height="150dp"
+        android:layout_height="wrap_content"
         android:layout_marginStart="25dp"
         android:layout_marginEnd="25dp"
         android:layout_marginBottom="25dp"
-        android:padding="10dp"
-        android:visibility="visible"
         android:clickable="true"
         android:focusable="true"
         android:focusableInTouchMode="true"
+        android:padding="10dp"
+        android:visibility="visible"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent">
@@ -129,7 +108,7 @@
         <LinearLayout
             android:id="@+id/foldedNavView"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:layout_height="match_parent"
             android:gravity="center"
             android:orientation="horizontal"
             android:visibility="visible">
@@ -232,5 +211,26 @@
         </LinearLayout>
 
     </FrameLayout>
+
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_marginStart="125dp"
+        android:layout_marginTop="50dp"
+        android:layout_marginEnd="125dp"
+        android:layout_marginBottom="500dp"
+        android:background="#FF0000"
+        android:clickable="true"
+        android:focusable="true"
+        android:focusableInTouchMode="true"
+        android:visibility="gone"
+        app:layout_constraintBottom_toBottomOf="@+id/fragmentMap"
+        app:layout_constraintEnd_toEndOf="@+id/fragmentMap"
+        app:layout_constraintHeight_max="150dp"
+        app:layout_constraintStart_toStartOf="@+id/fragmentMap"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintWidth_max="150dp">
+
+    </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

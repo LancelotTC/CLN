@@ -22,9 +22,10 @@
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
+        android:focusable="true"
         android:ems="10"
         android:inputType="text"
-        android:textColor="?colorOnPrimary" />
+        android:textColor="?colorOnPrimary" ><requestFocus/></EditText>
 
     <Switch
         android:id="@+id/switchInfoDraggable"

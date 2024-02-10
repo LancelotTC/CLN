@@ -1,11 +1,12 @@
 package com.example.cln;
 
-import android.animation.Animator;
 import android.animation.AnimatorSet;
+import android.animation.ObjectAnimator;
+import android.animation.ValueAnimator;
+import android.content.Context;
 import android.content.res.ColorStateList;
 import android.content.res.Resources;
 import android.os.Bundle;
-import android.util.Log;
 import android.util.TypedValue;
 import android.view.DisplayCutout;
 import android.view.RoundedCorner;
@@ -15,11 +16,7 @@ import android.view.ViewStub;
 import android.view.Window;
 import android.view.WindowInsets;
 import android.view.WindowManager;
-import android.view.animation.Animation;
-import android.view.animation.AnimationSet;
-import android.view.animation.Interpolator;
-import android.view.animation.ScaleAnimation;
-import android.view.animation.TranslateAnimation;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.AdapterView;
 import android.widget.EditText;
 import android.widget.FrameLayout;
@@ -40,11 +37,9 @@ import com.example.cln.Models.Composter;
 import com.example.cln.Models.Filter;
 import com.example.cln.Models.Plant;
 import com.example.cln.Models.Tree;
-
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
-import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MapStyleOptions;
 import com.google.android.material.shape.CornerFamily;
 import com.google.android.material.shape.MaterialShapeDrawable;
@@ -57,9 +52,14 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private Controller controller;
     private MapController mapController;
     private Window window;
+    private InputMethodManager inputMethodManager;
 
     private EditText txtSearch;
     private FrameLayout navView;
+    private Integer foldedHeight;
+    private Integer expandedHeight;
+    private int navState = 0;
+
     private LinearLayout foldedNavView;
     private FrameLayout expandedNavView;
 
@@ -84,7 +84,9 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.fragmentMap);
+
         assert mapFragment != null;
+
         mapFragment.getMapAsync(this);
 
         // Make notification bar disappear
@@ -102,6 +104,9 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         mapController = MapController.getInstance(this);
 
         window = getWindow();
+
+        inputMethodManager = (InputMethodManager)getSystemService(Context.INPUT_METHOD_SERVICE);
+
 
         txtSearch = findViewById(R.id.txtSearch);
 
@@ -127,29 +132,59 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         };
     }
 
+    private void requestFocus(EditText editText) {
+        editText.post(() -> {
+            editText.requestFocus();
+            inputMethodManager.toggleSoftInputFromWindow(editText.getWindowToken(), 0, 0);
+        });
+    }
+
+    private void clearFocus(EditText editText) {
+        editText.clearFocus();
+        inputMethodManager.hideSoftInputFromWindow(editText.getWindowToken(), 0);
+    }
+
     /**
      * Expands the navigation bar to make the newly visible UI fit
      */
     protected void expandNavView() {
+        if (navState == 1) {
+            return;
+        }
 
-        AnimationSet animationSet = new AnimationSet(true);
+        navState = 1;
+        ObjectAnimator translateAnimator = ObjectAnimator.ofFloat(navView, "translationY",
+                Math.round(txtSearch.getY() - navView.getY()+expandedHeight-foldedHeight));
+        translateAnimator.setDuration(300);
 
-        Animation translateAnimation = new TranslateAnimation(0, 0, 0,
-                Math.round(txtSearch.getY() - navView.getY()));
-        translateAnimation.setDuration(300);
-        animationSet.addAnimation(translateAnimation);
-
-
-        Animation resizeAnimation = new ScaleAnimation(1, 1, 1, 2);
-        resizeAnimation.setDuration(300);
-        animationSet.addAnimation(resizeAnimation);
-
-        animationSet.setInterpolator(new Interpolator() {
-            @Override
-            public float getInterpolation(float input) {
-                return 0;
-            }
+        ValueAnimator scaleAnimator = ValueAnimator.ofInt(foldedHeight, expandedHeight);
+        scaleAnimator.addUpdateListener(valueAnimator -> {
+            int val = (Integer) valueAnimator.getAnimatedValue();
+            ViewGroup.LayoutParams layoutParams = navView.getLayoutParams();
+            layoutParams.height = val;
+            navView.setLayoutParams(layoutParams);
         });
+
+//        ObjectAnimator animator2 = ObjectAnimator.ofFloat(navView, "scaleY", 2f);
+//        animator2.setDuration(1000);
+
+        AnimatorSet set = new AnimatorSet();
+        set.play(scaleAnimator).before(translateAnimator);
+        set.start();
+
+        foldedNavView.setVisibility(View.GONE);
+        expandedNavView.setVisibility(View.VISIBLE);
+
+//        navView.bringToFront();
+
+//        navView.setAnimation(scaleAnimation);
+//        navView.startAnimation(scaleAnimation);
+
+
+
+
+//        Animation resizeAnimation = new ScaleAnimation(0, 0, 0, 2);
+//        resizeAnimation.setDuration(500);
 
 
 //        ResizeAnimation resizeAnimation = new ResizeAnimation(
@@ -161,35 +196,46 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
 //        resizeAnimation.setDuration(300);
 
-        foldedNavView.setVisibility(View.GONE);
-        expandedNavView.setVisibility(View.VISIBLE);
-
-
-//        Button btnCancel = inflated.findViewById(R.id.btnCancelPlant);
-//        btnCancel.setOnClickListener(v -> foldNavView());
-        navView.setAnimation(animationSet);
-        navView.startAnimation(animationSet);
-
     }
 
     /**
      * Folds the navigation bar to fit the navigation buttons.
      */
     protected void foldNavView() {
+        if (navState == 0) {
+            return;
+        }
+
+        navState = 0;
+
+        ObjectAnimator translateAnimator = ObjectAnimator.ofFloat(navView, "translationY",
+                0);
+
+        translateAnimator.setDuration(300);
+        ValueAnimator scaleAnimator = ValueAnimator.ofInt(expandedHeight, foldedHeight);
+        scaleAnimator.addUpdateListener(valueAnimator -> {
+            int val = (Integer) valueAnimator.getAnimatedValue();
+            ViewGroup.LayoutParams layoutParams = navView.getLayoutParams();
+            layoutParams.height = val;
+            navView.setLayoutParams(layoutParams);
+        });
+
+        AnimatorSet set = new AnimatorSet();
+        set.play(scaleAnimator).before(translateAnimator);
+        set.start();
         foldedNavView.setVisibility(View.VISIBLE);
         expandedNavView.setVisibility(View.GONE);
-
-        ResizeAnimation resizeAnimation = new ResizeAnimation(
-                navView,
-                navView.getHeight()/3,
-//                ViewGroup.LayoutParams.WRAP_CONTENT,
-                navView.getHeight()
-        );
-
-
-        resizeAnimation.setDuration(300);
-        navView.setAnimation(resizeAnimation);
-        navView.startAnimation(resizeAnimation);
+//        ResizeAnimation resizeAnimation = new ResizeAnimation(
+//                navView,
+//                navView.getHeight()/3,
+////                ViewGroup.LayoutParams.WRAP_CONTENT,
+//                navView.getHeight()
+//        );
+//
+//
+//        resizeAnimation.setDuration(300);
+//        navView.setAnimation(resizeAnimation);
+//        navView.startAnimation(resizeAnimation);
     }
 
     /**
@@ -207,9 +253,16 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
      * Sets (almost) all UI related listeners, mainly buttons
      */
     protected void setListeners() {
-        findViewById(R.id.btnPlant).setOnClickListener(v -> {
+        foldedHeight = navView.getHeight();
+        expandedHeight = foldedHeight * 3;
 
+
+        findViewById(R.id.btnPlant).setOnClickListener(v -> {
             expandNavView();
+
+            EditText txtPlantName = ((EditText) inflatedPlant.findViewById(R.id.txtPlantName));
+            requestFocus(txtPlantName);
+
             toggleVisibility(inflatedPlant);
             Spinner spinner = inflatedPlant.findViewById(R.id.spinnerGrowthState);
             spinner.setOnItemSelectedListener(this);
@@ -217,7 +270,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
             inflatedPlant.findViewById(R.id.btnOkPlant).setOnClickListener(view -> {
                 MapController mapController = MapController.getInstance(MainActivity.this);
-                String label = ((EditText)inflatedPlant.findViewById(R.id.txtPlantName)).getText().toString();
+                String label = txtPlantName.getText().toString();
 
                 int nbFeuilles = 0;
 
@@ -233,11 +286,12 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 controller.addEntry(plant);
 
                 foldNavView();
-
+                clearFocus(txtPlantName);
             });
 
             inflatedPlant.findViewById(R.id.btnCancelPlant).setOnClickListener(v1 -> {
                 foldNavView();
+                clearFocus(txtPlantName);
             });
         });
 
@@ -245,10 +299,16 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
             expandNavView();
             toggleVisibility(inflatedTree);
+            EditText txtTreeName = ((EditText) inflatedTree.findViewById(R.id.txtTreeName));
+            requestFocus(txtTreeName);
+
+//            InputMethodManager imm = (InputMethodManager)getSystemService(Context.INPUT_METHOD_SERVICE);
+
+//            imm.toggleSoftInput(InputMethodManager.SHOW_FORCED, 0);
 
             inflatedTree.findViewById(R.id.btnOkTree).setOnClickListener(view -> {
                 MapController mapController = MapController.getInstance(MainActivity.this);
-                String label = ((EditText)inflatedTree.findViewById(R.id.txtTreeName)).getText().toString();
+                String label = txtTreeName.getText().toString();
 
 
                 Tree tree = new Tree(label, mapController.getCurrentLocation());
@@ -256,11 +316,12 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 controller.addEntry(tree);
 
                 foldNavView();
-
+                clearFocus(txtTreeName);
             });
 
             inflatedTree.findViewById(R.id.btnCancelTree).setOnClickListener(v1 -> {
                 foldNavView();
+                clearFocus(txtTreeName);
             });
         });
 
@@ -269,32 +330,36 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
             expandNavView();
             toggleVisibility(inflatedFilter);
+            EditText txtFilterName = ((EditText) inflatedFilter.findViewById(R.id.txtFilterName));
+            requestFocus(txtFilterName);
 
             inflatedFilter.findViewById(R.id.btnOkFilter).setOnClickListener(view -> {
                 MapController mapController = MapController.getInstance(MainActivity.this);
-                String label = ((EditText)inflatedFilter.findViewById(R.id.txtFilterName)).getText().toString();
-
+                String label = txtFilterName.getText().toString();
 
                 Filter filter = new Filter(label, mapController.getCurrentLocation());
 
                 controller.addEntry(filter);
 
                 foldNavView();
-
+                clearFocus(txtFilterName);
             });
 
             inflatedFilter.findViewById(R.id.btnCancelFilter).setOnClickListener(v1 -> {
                 foldNavView();
+                clearFocus(txtFilterName);
             });
         });
 
         findViewById(R.id.btnComposter).setOnClickListener(v -> {
             expandNavView();
             toggleVisibility(inflatedComposter);
+            EditText txtComposterName = ((EditText) inflatedComposter.findViewById(R.id.txtComposterName));
+            requestFocus(txtComposterName);
 
             inflatedComposter.findViewById(R.id.btnOkComposter).setOnClickListener(view -> {
                 MapController mapController = MapController.getInstance(MainActivity.this);
-                String label = ((EditText)inflatedComposter.findViewById(R.id.txtComposterName)).getText().toString();
+                String label = txtComposterName.getText().toString();
 
 
                 Composter composter = new Composter(label, mapController.getCurrentLocation());
@@ -302,27 +367,13 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 controller.addEntry(composter);
 
                 foldNavView();
-
+                clearFocus(txtComposterName);
             });
 
             inflatedComposter.findViewById(R.id.btnCancelComposter).setOnClickListener(v1 -> {
                 foldNavView();
+                clearFocus(txtComposterName);
             });
-        });
-
-        inflatedInfo.findViewById(R.id.btnInfoUpdate).setOnClickListener(v -> {
-            String label = ((EditText)inflatedInfo.findViewById(R.id.txtInfoName)).getText().toString();
-
-            boolean draggable = !((Switch)inflatedInfo.findViewById(R.id.switchInfoDraggable)).isChecked();
-
-
-            controller.updateEntry(mapController.getSelectedMarker(), label, draggable);
-            foldNavView();
-
-        });
-
-        inflatedInfo.findViewById(R.id.btnInfoCancel).setOnClickListener(v -> {
-            foldNavView();
         });
     }
 
@@ -332,11 +383,12 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
      *
      * @param v      The view applying window insets
      * @param insets The insets to apply
-     * @return
+     * @return WindowInsetsCompat
      */
     @NonNull
     @Override
     public WindowInsetsCompat onApplyWindowInsets(@NonNull View v, @NonNull WindowInsetsCompat insets) {
+
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
             WindowInsets windowInsets = window.getDecorView().getRootWindowInsets();
 
@@ -382,10 +434,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     }
 
     /**
-     * Prompts the user for permission to use the device location.
-     */
-
-    /**
      * Method that is called once the map is ready. Repopulates the map and sets map-related listeners.
      * @param googleMap
      */
@@ -410,14 +458,34 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                     (CharSequence) (Objects.requireNonNull(m.getTitle()).isEmpty() ? "Untitled" : m.getTitle())
             );
 
-            ((EditText)inflatedInfo.findViewById(R.id.txtInfoName)).setText(
+            EditText txtInfoName = ((EditText) inflatedInfo.findViewById(R.id.txtInfoName));
+            txtInfoName.setText(
                     (CharSequence) (Objects.requireNonNull(m.getTitle()).isEmpty() ? "Untitled" : m.getTitle())
             );
+            requestFocus(txtInfoName);
+
 
             ((Switch) inflatedInfo.findViewById(R.id.switchInfoDraggable)).setChecked(
                     !m.isDraggable()
             );
+
+            inflatedInfo.findViewById(R.id.btnInfoUpdate).setOnClickListener(v -> {
+                String label = txtInfoName.getText().toString();
+
+                boolean draggable = !((Switch)inflatedInfo.findViewById(R.id.switchInfoDraggable)).isChecked();
+
+                controller.updateEntry(mapController.getSelectedMarker(), label, draggable);
+                foldNavView();
+                clearFocus(((EditText) inflatedInfo.findViewById(R.id.txtInfoName)));
+            });
+
+            inflatedInfo.findViewById(R.id.btnInfoCancel).setOnClickListener(v1 -> {
+                foldNavView();
+                clearFocus(((EditText) inflatedInfo.findViewById(R.id.txtInfoName)));
+            });
+
         });
+
         // Folds the menu back to the navigation buttons on map clicked (exits the marker update menu)
         Lambda task = this::foldNavView;
         mapController.setOnMapClickListener(task);

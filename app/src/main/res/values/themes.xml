@@ -13,5 +13,4 @@
 <!--        <item name="android:editTextColor">@color/black</item>-->
     </style>
 
-    <style name="Theme.CLN" parent="Base.Theme.CLN" />
 </resources>

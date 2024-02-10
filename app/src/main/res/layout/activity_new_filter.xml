@@ -27,13 +27,15 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="25dp"
         android:ems="10"
+        android:focusable="true"
         android:hint="Nom"
         android:inputType="text"
         android:textColor="?colorOnPrimary"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHeight_min="48dp"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/textView1" />
+        app:layout_constraintTop_toBottomOf="@+id/textView1"
+        android:autofillHints=""/>
 
     <LinearLayout
         android:id="@+id/constraintLayout2"
