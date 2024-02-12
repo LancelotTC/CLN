@@ -1,9 +1,12 @@
 package com.example.cln;
 
+import android.Manifest;
 import android.animation.AnimatorSet;
 import android.animation.ObjectAnimator;
 import android.animation.ValueAnimator;
+import android.app.AlertDialog;
 import android.content.Context;
+import android.content.pm.PackageManager;
 import android.content.res.ColorStateList;
 import android.content.res.Resources;
 import android.os.Bundle;
@@ -28,6 +31,7 @@ import android.widget.TextView;
 import androidx.annotation.ColorInt;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
@@ -37,6 +41,7 @@ import com.example.cln.Models.Composter;
 import com.example.cln.Models.Filter;
 import com.example.cln.Models.Plant;
 import com.example.cln.Models.Tree;
+import com.example.cln.Storers.RemoteAccess;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
@@ -48,7 +53,8 @@ import com.google.android.material.shape.ShapeAppearanceModel;
 import java.util.Objects;
 
 public class MainActivity extends AppCompatActivity implements OnMapReadyCallback,
-        androidx.core.view.OnApplyWindowInsetsListener, AdapterView.OnItemSelectedListener {
+androidx.core.view.OnApplyWindowInsetsListener, AdapterView.OnItemSelectedListener,
+ActivityCompat.OnRequestPermissionsResultCallback {
     private Controller controller;
     private MapController mapController;
     private Window window;
@@ -76,9 +82,9 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-
         // set global variables
         defineGlobals();
+        getLocationPermission();
 
         ViewCompat.setOnApplyWindowInsetsListener(window.getDecorView(), this);
 
@@ -93,13 +99,40 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS,
                 WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS);
         getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_IMMERSIVE);
+
+        RemoteAccess.getInstance(this);
     }
 
+    @Override
+    protected void onDestroy() {
+        mapController.releaseContext();
+    }
+    protected void getLocationPermission() {
+        if (
+                ActivityCompat.checkSelfPermission(this,
+                        Manifest.permission.ACCESS_COARSE_LOCATION)
+                        ==
+                        PackageManager.PERMISSION_DENIED
+        ) {
+            ActivityCompat.requestPermissions(this,
+                    new String[]{android.Manifest.permission.ACCESS_COARSE_LOCATION},
+                    1);
+        } else {
+            mapController.requestLastKnownLocation();
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
+    @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        mapController.requestLastKnownLocation();
+    }
 
     /**
      * Defines all global variables in MainActivity
      */
-    private void defineGlobals() {
+    protected void defineGlobals() {
         controller = Controller.getInstance(this);
         mapController = MapController.getInstance(this);
 
@@ -132,14 +165,14 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         };
     }
 
-    private void requestFocus(EditText editText) {
+    protected void requestFocus(EditText editText) {
         editText.post(() -> {
             editText.requestFocus();
             inputMethodManager.toggleSoftInputFromWindow(editText.getWindowToken(), 0, 0);
         });
     }
 
-    private void clearFocus(EditText editText) {
+    protected void clearFocus(EditText editText) {
         editText.clearFocus();
         inputMethodManager.hideSoftInputFromWindow(editText.getWindowToken(), 0);
     }
@@ -223,6 +256,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         AnimatorSet set = new AnimatorSet();
         set.play(scaleAnimator).before(translateAnimator);
         set.start();
+
         foldedNavView.setVisibility(View.VISIBLE);
         expandedNavView.setVisibility(View.GONE);
 //        ResizeAnimation resizeAnimation = new ResizeAnimation(
@@ -255,7 +289,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     protected void setListeners() {
         foldedHeight = navView.getHeight();
         expandedHeight = foldedHeight * 3;
-
 
         findViewById(R.id.btnPlant).setOnClickListener(v -> {
             expandNavView();
@@ -476,19 +509,38 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
                 controller.updateEntry(mapController.getSelectedMarker(), label, draggable);
                 foldNavView();
-                clearFocus(((EditText) inflatedInfo.findViewById(R.id.txtInfoName)));
+                clearFocus(inflatedInfo.findViewById(R.id.txtInfoName));
             });
 
             inflatedInfo.findViewById(R.id.btnInfoCancel).setOnClickListener(v1 -> {
                 foldNavView();
-                clearFocus(((EditText) inflatedInfo.findViewById(R.id.txtInfoName)));
+                clearFocus(inflatedInfo.findViewById(R.id.txtInfoName));
             });
 
+            inflatedInfo.findViewById(R.id.btnDeleteInfo).setOnClickListener(
+                    v -> {
+                        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+                        builder.setTitle("Confirmer");
+                        builder.setMessage("Etes-vous sûr ?");
+                        builder.setPositiveButton("Oui", (dialog, which) -> {
+                            controller.deleteEntry(mapController.getSelectedMarker());
+                            clearFocus(inflatedInfo.findViewById(R.id.txtInfoName));
+                            foldNavView();
+                        });
+
+                        builder.setNegativeButton("Non", (dialog, which) -> dialog.dismiss());
+
+                        AlertDialog alert = builder.create();
+                        alert.show();
+
+                    }
+            );
         });
 
         // Folds the menu back to the navigation buttons on map clicked (exits the marker update menu)
         Lambda task = this::foldNavView;
         mapController.setOnMapClickListener(task);
+
     }
 
     /**
@@ -517,4 +569,5 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     public void onNothingSelected(AdapterView<?> parent) {
 
     }
+
 }

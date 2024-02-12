@@ -1,4 +1,4 @@
-package com.example.cln.Controllers;
+package com.example.cln.Storers;
 
 import android.content.Context;
 import android.database.Cursor;
@@ -10,8 +10,6 @@ import com.example.cln.Models.Filter;
 import com.example.cln.Models.Model;
 import com.example.cln.Models.Plant;
 import com.example.cln.Models.Tree;
-import com.example.cln.Storers.MySQLiteOpenHelper;
-import com.example.cln.Storers.RegionSelector;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 
@@ -23,23 +21,23 @@ import java.util.function.Function;
 /**
  * Classe exploitant MySQLiteOpenHelper pour manipuler la bdd au format SQLite
  */
-public class DatabaseController {
+public class LocalAccess {
 
     private String dbName = "cln.sqlite";
     private Integer dbVersion = 1;
     private final MySQLiteOpenHelper dbAccess;
-    private static DatabaseController instance;
+    private static LocalAccess instance;
     private SQLiteDatabase db;
     private final HashMap<Long, Model> objectToMarker;
 
-    private DatabaseController(Context context) {
+    private LocalAccess(Context context) {
         dbAccess = new MySQLiteOpenHelper(context, dbName, dbVersion);
         objectToMarker = new HashMap<>();
     }
 
-    public static DatabaseController getInstance(Context context){
+    public static LocalAccess getInstance(Context context){
         if(instance == null) {
-            instance = new DatabaseController(context);
+            instance = new LocalAccess(context);
         }
 
         return instance;
@@ -47,6 +45,10 @@ public class DatabaseController {
 
     public Model getModel(Long markerTag) {
         return objectToMarker.get(markerTag);
+    }
+
+    public Model getModel(Marker marker) {
+        return objectToMarker.get((Long) marker.getTag());
     }
 
     public void addModel(Long markerTag, Model model) {
@@ -166,12 +168,30 @@ public class DatabaseController {
         return entries.toArray(new Model[0]);
     }
 
+    private String getModelIdName(Model model) {
+        return model.getTableName() + "_id";
+    }
+
     public void updateEntry(Model model) {
         db = dbAccess.getReadableDatabase();
 
-        db.update(model.getTableName(), model.getContentValues(), model.getTableName() + "_id = ?",
-                new String[]{String.valueOf(model.getId())});
+        try {
+            db.update(model.getTableName(), model.getContentValues(), model.getTableName() + "_id = ?",
+                    new String[]{String.valueOf(model.getId())});
+        } finally {
+            db.close();
+        }
+    }
 
-        db.close();
+    public void deleteEntry(Marker selectedMarker) {
+        Model model = objectToMarker.get((Long) selectedMarker.getTag());
+        assert model != null;
+        db = dbAccess.getWritableDatabase();
+        try {
+            db.delete(model.getTableName(), model.getTableName() + "_id = ?",
+                    new String[] {String.valueOf(model.getId())});
+        } finally {
+            db.close();
+        }
     }
 }

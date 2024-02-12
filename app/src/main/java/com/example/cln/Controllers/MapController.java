@@ -2,6 +2,8 @@ package com.example.cln.Controllers;
 
 //import static androidx.appcompat.graphics.drawable.DrawableContainerCompat.Api21Impl.getResources;
 
+import android.Manifest;
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Context;
 import android.content.pm.PackageManager;
@@ -21,6 +23,7 @@ import androidx.core.content.ContextCompat;
 import com.example.cln.Lambda;
 import com.example.cln.Models.Model;
 import com.example.cln.R;
+import com.example.cln.Shortcuts;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.CameraUpdateFactory;
@@ -34,16 +37,19 @@ import com.google.android.gms.maps.model.Polygon;
 import com.google.android.gms.maps.model.PolygonOptions;
 import com.google.android.gms.tasks.Task;
 
+import java.util.Arrays;
+import java.util.List;
 import java.util.Objects;
 import java.util.function.Consumer;
 
 /**
  * Controller specifically for the map object. Instantiates and manages everything on the map.
  */
-public class MapController {
+public class MapController implements ActivityCompat.OnRequestPermissionsResultCallback {
     /**
      * Static instance of class for Singleton design pattern
      */
+    @SuppressLint("StaticFieldLeak")
     private static MapController instance;
 
     /**
@@ -63,18 +69,31 @@ public class MapController {
 //    private boolean currentLocationRequested = false;
 //    private boolean currentLocationAvailable = false;
 
-
     /**
+     * WARNING: This, coupled with the instance of MapController being static, constitutes a memory
+     * leak. I've set the onDestroy method in the activity that calls {@link #releaseContext()} method
+     * that clears the reference. I'm banking on the fact that this is a sufficient solution and that
+     * phones nowadays know how to manage such memory leaks if it every appears in the first place.
      * Since the map is in MainActivity and this is the MapController, the only context will be
      * MainActivity so it's fine to store it once and for all in the controller instead of passing
      * it to every method call
      */
-    private final Context context;
+    private Context context;
 
     /**
      * Stores the selected marker on the map or null if it doesn't exist
      */
     private Marker selectedMarker = null;
+
+    /**
+     * Maximum zoom allowed by the Google Map API depending on the map
+     */
+    private final int MAX_ZOOM;
+
+    {
+        MAX_ZOOM = 21;
+    }
+
 
     /**
      * Constructor for the controller for the Map object
@@ -86,7 +105,6 @@ public class MapController {
         this.context = context;
         getLocationPermission();
     }
-
 
     /**
      * Method to get the sole instance for Singleton design pattern
@@ -125,6 +143,7 @@ public class MapController {
         });
     }
 
+
     /**
      * Defines the map. Has to be done before using the map features from the map controller
      * @param googleMap GoogleMap instance
@@ -135,6 +154,61 @@ public class MapController {
         setListeners();
     }
 
+
+    /**
+     * Requests the location permission.
+     */
+    public void getLocationPermission() {
+
+        if (// If neither coarse and fine location perms aren't granted
+//                ActivityCompat.checkSelfPermission(context,
+//                        Manifest.permission.ACCESS_FINE_LOCATION)
+//                        !=
+//                        PackageManager.PERMISSION_GRANTED
+//
+//                        &&
+
+                        ActivityCompat.checkSelfPermission(context,
+                                Manifest.permission.ACCESS_COARSE_LOCATION)
+                                !=
+                                PackageManager.PERMISSION_GRANTED
+        ) {
+            // TODO: Consider calling ActivityCompat#requestPermissions here to request the missing
+            //  permissions, and then overriding
+            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+            //                                          int[] grantResults)
+            // to handle the case where the user grants the permission. See the documentation
+            // for ActivityCompat#requestPermissions for more details.
+
+            ActivityCompat.requestPermissions((Activity) context,
+                    new String[]{android.Manifest.permission.ACCESS_COARSE_LOCATION},
+                    1);
+//            ActivityCompat.requestPermissions((Activity) context,
+//                    new String[]{android.Manifest.permission.ACCESS_FINE_LOCATION},
+//                    1);
+        } else { // If they're both granted
+            locationPermissionGranted = true;
+        }
+    }
+
+    /**
+     * Gets the permission results (doesn't work)
+     * @param requestCode The request code passed in {@link #requestPermissions(
+     * android.app.Activity, String[], int)}
+     * @param permissions The requested permissions. Never null.
+     * @param grantResults The grant results for the corresponding permissions
+     *     which is either {@link android.content.pm.PackageManager#PERMISSION_GRANTED}
+     *     or {@link android.content.pm.PackageManager#PERMISSION_DENIED}. Never null.
+     *
+     */
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
+                                           @NonNull int[] grantResults) {
+        Shortcuts.toast(context, requestCode + " " + Arrays.toString(permissions) + " " +
+                Arrays.toString(grantResults));
+    }
+
+
     /**
      * Returns the selected marker on the map or null if it doesn't exist
      * @return Marker
@@ -142,6 +216,16 @@ public class MapController {
     public Marker getSelectedMarker() {
         Log.d("selectedMarker", "Attempted to get selectedMarker" + selectedMarker);
         return selectedMarker;
+    }
+
+
+    /**
+     * Returns the LatLng of the lastKnownLocation
+     * @return LatLng
+     */
+    @NonNull
+    public LatLng getCurrentLocation() {
+        return new LatLng(lastKnownLocation.getLatitude(), lastKnownLocation.getLongitude());
     }
 
     /**
@@ -154,13 +238,75 @@ public class MapController {
     }
 
     /**
-     * Returns the LatLng of the lastKnownLocation
-     * @return LatLng
+     * Move to current location (uses lastKnownLocation)
      */
-    @NonNull
-    public LatLng getCurrentLocation() {
-        return new LatLng(lastKnownLocation.getLatitude(), lastKnownLocation.getLongitude());
+    public void moveToCurrentLocation() {
+        if (lastKnownLocation == null) {
+            return;
+        }
+
+        moveCamera(getCurrentLocation());
     }
+
+    /**
+     * Animates the camera to the specified location and zoom level
+     * @param latLng Location
+     * @param zoom Zoom level
+     */
+    public void moveCamera(LatLng latLng, int zoom) {
+        googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng, zoom));
+    }
+
+    /**
+     * Animates the camera to the specified location. Zoom level at MAX_ZOOM (21.0)
+     * @param latLng Location
+     */
+    public void moveCamera(LatLng latLng) {
+        moveCamera(latLng, MAX_ZOOM);
+    }
+
+    private void onLastKnownLocationAssigned() {
+        moveToCurrentLocation();
+        PolygonOptions polygonOptions = new PolygonOptions();
+        LatLng currentLocation = getCurrentLocation();
+
+        polygonOptions.add(
+                new LatLng(currentLocation.latitude + 0.000009, currentLocation.longitude),
+                new LatLng(currentLocation.latitude - 0.000009, currentLocation.longitude + 0.000009),
+                new LatLng(currentLocation.latitude - 0.000009, currentLocation.longitude)
+        );
+        polygonOptions.clickable(true);
+        polygonOptions.strokeWidth(5);
+
+        addPolygon(polygonOptions);
+    }
+
+    /**
+     * Defines the lastKnownLocation variable if possible. Called in the setMap method only for now.
+     */
+    public void requestLastKnownLocation() {
+        FusedLocationProviderClient fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(context);
+
+        try {
+            if (locationPermissionGranted) {
+                Task<Location> locationResult = fusedLocationProviderClient.getLastLocation();
+                locationResult.addOnCompleteListener((Activity) context, task -> {
+                    if (task.isSuccessful()) {
+                        // Set the map's camera position to the current location of the device.
+                        lastKnownLocation = task.getResult();
+                        onLastKnownLocationAssigned();
+
+                    } else {
+                        Log.d("INFO", "Current location is null. Using defaults.");
+                        Log.e("INFO", "Exception: %s", task.getException());
+                    }
+                });
+            }
+        } catch (SecurityException e)  {
+            Log.e("Exception: %s", e.getMessage(), e);
+        }
+    }
+
 
     /**
      * Converts a drawable vector resource into a bitmap descriptor. Used to be able to change default
@@ -216,6 +362,7 @@ public class MapController {
      * @param resourceId Icon resource
      * @return Marker
      */
+    @NonNull
     private Marker addMapMarker(LatLng latLng, String title, int resourceId) {
         MarkerOptions markerOptions = new MarkerOptions();
 
@@ -232,85 +379,6 @@ public class MapController {
 
         marker.setIcon(bitmapDescriptorFromVector(resourceId));
         return marker;
-    }
-
-    /**
-     * Move to current location (uses lastKnownLocation)
-     */
-    public void moveToCurrentLocation() {
-        if (lastKnownLocation == null) {
-            return;
-        }
-
-        moveCamera(getCurrentLocation());
-    }
-
-    /**
-     * Animates the camera to the specified location and zoom level
-     * @param latLng Location
-     * @param zoom Zoom level
-     */
-    public void moveCamera(LatLng latLng, int zoom) {
-        googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng, zoom));
-    }
-
-    /**
-     * Animates the camera to the specified location. Zoom level at 30
-     * @param latLng Location
-     */
-    public void moveCamera(LatLng latLng) {
-        moveCamera(latLng, 30);
-    }
-
-    /**
-     * Defines the lastKnownLocation variable if possible. Called in the setMap method only for now.
-     */
-    public void requestLastKnownLocation() {
-        FusedLocationProviderClient fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(context);
-
-        try {
-            if (locationPermissionGranted) {
-
-                Task<Location> locationResult = fusedLocationProviderClient.getLastLocation();
-                locationResult.addOnCompleteListener((Activity) context, task -> {
-                    if (task.isSuccessful()) {
-                        // Set the map's camera position to the current location of the device.
-                        lastKnownLocation = task.getResult();
-                        moveToCurrentLocation();
-
-                    } else {
-                        Log.d("INFO", "Current location is null. Using defaults.");
-                        Log.e("INFO", "Exception: %s", task.getException());
-                    }
-                });
-            }
-        } catch (SecurityException e)  {
-            Log.e("Exception: %s", e.getMessage(), e);
-        }
-    }
-
-    /**
-     * Requests the location permission.
-     */
-    public void getLocationPermission() {
-        if (ContextCompat.checkSelfPermission(context.getApplicationContext(),
-                android.Manifest.permission.ACCESS_FINE_LOCATION)
-                == PackageManager.PERMISSION_GRANTED) {
-            locationPermissionGranted = true;
-        } else {
-            ActivityCompat.requestPermissions((Activity) context,
-                    new String[]{android.Manifest.permission.ACCESS_FINE_LOCATION},
-                    1);
-        }
-    }
-
-    /**
-     * Adds a polygon to the map
-     * @param rectOptions PolygonOptions type
-     * @return Polygon
-     */
-    public Polygon addPolygon(PolygonOptions rectOptions) {
-        return googleMap.addPolygon(rectOptions);
     }
 
     /**
@@ -332,6 +400,16 @@ public class MapController {
         marker.setTitle(label);
         marker.setDraggable(draggable);
     }
+
+    /**
+     * Adds a polygon to the map
+     * @param polygonOptions PolygonOptions type
+     * @return Polygon
+     */
+    public Polygon addPolygon(PolygonOptions polygonOptions) {
+        return googleMap.addPolygon(polygonOptions);
+    }
+
 
     /**
      * Defines the setOnMarkerClickListener listener. The method content can't be added to the
@@ -362,5 +440,28 @@ public class MapController {
             func.run();
             selectedMarker = null;
         });
+
+        googleMap.setOnPolygonClickListener(polygon -> {
+            Shortcuts.toast(context, polygon.getPoints());
+            List<LatLng> points = polygon.getPoints();
+            polygon.remove();
+            PolygonOptions polygonOptions = new PolygonOptions();
+            polygonOptions.clickable(true);
+
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                points.forEach(point -> {
+                    polygonOptions.add(new LatLng(point.latitude + 1, point.longitude));
+                });
+            }
+
+            addPolygon(polygonOptions);
+
+//            points.forEach();
+        });
+    }
+
+    public void releaseContext() {
+        context = null;
     }
 }

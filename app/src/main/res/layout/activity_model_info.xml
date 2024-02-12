@@ -38,23 +38,37 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal">
+        android:orientation="vertical">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="horizontal">
+
+            <Button
+                android:id="@+id/btnInfoUpdate"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:backgroundTint="?colorOnPrimary"
+                android:text="Modifier"
+                android:textColor="?colorPrimary" />
+
+            <Button
+                android:id="@+id/btnInfoCancel"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Annuler"
+                android:textColor="?colorOnPrimary" />
+        </LinearLayout>
 
         <Button
-            android:id="@+id/btnInfoUpdate"
-            android:layout_width="wrap_content"
+            android:id="@+id/btnDeleteInfo"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:backgroundTint="?colorOnPrimary"
-            android:text="Modifier"
-            android:textColor="?colorPrimary" />
-
-        <Button
-            android:id="@+id/btnInfoCancel"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="Annuler"
+            android:text="Supprimer"
             android:textColor="?colorOnPrimary" />
+
     </LinearLayout>
 </LinearLayout>
