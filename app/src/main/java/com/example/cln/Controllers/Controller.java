@@ -4,16 +4,19 @@ import android.content.Context;
 
 import com.example.cln.Models.Model;
 import com.example.cln.Storers.LocalAccess;
+import com.example.cln.Storers.RemoteAccess;
 import com.google.android.gms.maps.model.Marker;
 
 public class Controller {
     private static Controller instance;
     private final MapController mapController;
     private final LocalAccess localAccess;
+    private final RemoteAccess remoteAccess;
 
     private Controller(Context context) {
         mapController = MapController.getInstance(context);
         localAccess = LocalAccess.getInstance(context);
+        remoteAccess = RemoteAccess.getInstance(context);
     }
 
     public static Controller getInstance(Context context) {
@@ -27,6 +30,7 @@ public class Controller {
     public void addEntry(Model model) {
         Marker marker = mapController.addMapMarker(model);
         localAccess.addEntry(model, marker);
+        remoteAccess.add(model.toJSONObject());
     }
 
     public void retrieveEntries() {

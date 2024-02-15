@@ -344,7 +344,7 @@ ActivityCompat.OnRequestPermissionsResultCallback {
                 String label = txtTreeName.getText().toString();
 
 
-                Tree tree = new Tree(label, mapController.getCurrentLocation());
+                Tree tree = new Tree(label, mapController.getCurrentScreenLocation());
 
                 controller.addEntry(tree);
 
@@ -370,7 +370,7 @@ ActivityCompat.OnRequestPermissionsResultCallback {
                 MapController mapController = MapController.getInstance(MainActivity.this);
                 String label = txtFilterName.getText().toString();
 
-                Filter filter = new Filter(label, mapController.getCurrentLocation());
+                Filter filter = new Filter(label, mapController.getCurrentScreenLocation());
 
                 controller.addEntry(filter);
 
@@ -395,7 +395,7 @@ ActivityCompat.OnRequestPermissionsResultCallback {
                 String label = txtComposterName.getText().toString();
 
 
-                Composter composter = new Composter(label, mapController.getCurrentLocation());
+                Composter composter = new Composter(label, mapController.getCurrentScreenLocation());
 
                 controller.addEntry(composter);
 
@@ -479,8 +479,6 @@ ActivityCompat.OnRequestPermissionsResultCallback {
         mapController.setMap(googleMap);
 
         controller.retrieveEntries();
-
-        mapController.moveToCurrentLocation();
 
 
         // Opens up a update menu on marker clicked.

@@ -13,6 +13,8 @@ import android.graphics.Canvas;
 import android.graphics.Matrix;
 import android.graphics.drawable.Drawable;
 import android.location.Location;
+import android.location.LocationListener;
+import android.location.LocationManager;
 import android.os.Build;
 import android.util.Log;
 
@@ -267,6 +269,7 @@ public class MapController implements ActivityCompat.OnRequestPermissionsResultC
 
     private void onLastKnownLocationAssigned() {
         moveToCurrentLocation();
+
         PolygonOptions polygonOptions = new PolygonOptions();
         LatLng currentLocation = getCurrentLocation();
 
@@ -307,6 +310,20 @@ public class MapController implements ActivityCompat.OnRequestPermissionsResultC
         }
     }
 
+    private void requestCurrentLocation() {
+        LocationManager locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+        locationManager.requestSingleUpdate(LocationManager.GPS_PROVIDER, locationListener, null);
+
+        LocationListener locationListener = new LocationListener() {
+            @Override
+            public void onLocationChanged(Location location) {
+                // Extract latitude and longitude from the location object
+                // Use the information and don't forget to remove location updates afterwards
+                locationManager.removeUpdates(locationListener);
+            }
+        };
+
+    }
 
     /**
      * Converts a drawable vector resource into a bitmap descriptor. Used to be able to change default

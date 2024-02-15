@@ -1,10 +1,12 @@
 package com.example.cln.Models;
 
 import android.content.ContentValues;
-import android.util.Log;
 
 import com.example.cln.R;
 import com.google.android.gms.maps.model.LatLng;
+
+import org.json.JSONException;
+import org.json.JSONObject;
 
 public class Plant extends Model {
     private final Integer growthState;
@@ -36,9 +38,21 @@ public class Plant extends Model {
         contentValues.put("latitude", getLatLng().latitude);
         contentValues.put("longitude", getLatLng().longitude);
         contentValues.put("growth_state_id", getGrowthState());
-        contentValues.put("nb_leaves", getLeafAmount());
+        contentValues.put("leaf_amount", getLeafAmount());
 
         return contentValues;
+    }
+
+    public JSONObject toJSONObject() {
+        JSONObject jsonObject = super.toJSONObject();
+
+        try {
+            jsonObject.put("growth_state_id", getGrowthState());
+            jsonObject.put("leaf_amount", getLeafAmount());
+        } catch (JSONException e) {
+            throw new RuntimeException(e);
+        }
+        return jsonObject;
     }
 
 }

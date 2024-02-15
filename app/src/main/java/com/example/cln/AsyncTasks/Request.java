@@ -14,11 +14,15 @@ import java.util.Map;
 import java.util.concurrent.Callable;
 
 public class Request implements Callable<String> {
+    private final String METHOD;
     private String response;
     private final StringBuilder requestParameters = new StringBuilder();
-    private final String requestUrl = "localhost";
+    private final String requestUrl = "localhost/cln/clnserver.php";
 
-    public Request(Map<String, String> parameters) {
+    public Request(Map<String, String> parameters, String METHOD) {
+        super();
+        this.METHOD = METHOD;
+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
             parameters.forEach((key, value) -> {
                 if (!requestParameters.toString().equals("")) {
@@ -53,13 +57,14 @@ public class Request implements Callable<String> {
         System.setProperty("http.keepAlive", "false");
         PrintWriter writer = null;
         BufferedReader reader = null;
+
         try {
             URL url = new URL(requestUrl);
 
             HttpURLConnection connexion = (HttpURLConnection) url.openConnection();
             connexion.setDoOutput(true);
 
-            connexion.setRequestMethod("POST");
+            connexion.setRequestMethod(METHOD);
             connexion.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
             connexion.setFixedLengthStreamingMode(requestParameters.toString().getBytes().length);
 

@@ -2,6 +2,9 @@ package com.example.cln.Models;
 
 import com.google.android.gms.maps.model.LatLng;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
 public class Model implements ModelInterface {
     private Long id;
     private String label;
@@ -40,5 +43,18 @@ public class Model implements ModelInterface {
     @Override
     public void setLatLng(LatLng latLng) {
         this.latLng = latLng;
+    }
+
+    public JSONObject toJSONObject() {
+        JSONObject jsonObject = new JSONObject();
+        try {
+            jsonObject.put("label", label);
+            jsonObject.put("latitude", getLatLng().latitude);
+            jsonObject.put("longitude", getLatLng().longitude);
+        } catch (JSONException e) {
+            throw new RuntimeException(e);
+        }
+
+        return jsonObject;
     }
 }
