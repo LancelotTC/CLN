@@ -16,7 +16,7 @@ public class MySQLiteOpenHelper extends SQLiteOpenHelper {
     private final String fruitTreeTableCreationQuery =
             "CREATE TABLE fruit_tree(fruit_tree_id INTEGER PRIMARY KEY AUTOINCREMENT,label VARCHAR(50) NOT NULL,latitude DECIMAL(15,13) NOT NULL,longitude DECIMAL(16,13) NOT NULL);";
     private final String plantTableCreationQuery =
-            "CREATE TABLE plant(plant_id INTEGER PRIMARY KEY AUTOINCREMENT, label VARCHAR(50) NOT NULL, latitude DECIMAL(15,13) NOT NULL, longitude DECIMAL(16,13) NOT NULL, nb_leaves INT, growth_state_id INT NOT NULL,FOREIGN KEY (growth_state_id) REFERENCES growth_state(growth_state_id));";
+            "CREATE TABLE plant(plant_id INTEGER PRIMARY KEY AUTOINCREMENT, label VARCHAR(50) NOT NULL, latitude DECIMAL(15,13) NOT NULL, longitude DECIMAL(16,13) NOT NULL, leaf_amount INT, growth_state_id INT NOT NULL,FOREIGN KEY (growth_state_id) REFERENCES growth_state(growth_state_id));";
     private final String filterTableCreationQuery =
             "CREATE TABLE filter(filter_id INTEGER PRIMARY KEY AUTOINCREMENT, label VARCHAR(50) NOT NULL, latitude DECIMAL(15, 13) NOT NULL, longitude DECIMAL(16,13) NOT NULL);";
     private final String composterTableCreationQuery =

@@ -82,9 +82,10 @@ ActivityCompat.OnRequestPermissionsResultCallback {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        deleteDatabase("cln.sqlite");
+
         // set global variables
         defineGlobals();
-        getLocationPermission();
 
         ViewCompat.setOnApplyWindowInsetsListener(window.getDecorView(), this);
 
@@ -106,6 +107,7 @@ ActivityCompat.OnRequestPermissionsResultCallback {
     @Override
     protected void onDestroy() {
         mapController.releaseContext();
+        super.onDestroy();
     }
     protected void getLocationPermission() {
         if (
@@ -113,12 +115,21 @@ ActivityCompat.OnRequestPermissionsResultCallback {
                         Manifest.permission.ACCESS_COARSE_LOCATION)
                         ==
                         PackageManager.PERMISSION_DENIED
+                        ||
+                ActivityCompat.checkSelfPermission(this,
+                        Manifest.permission.ACCESS_FINE_LOCATION)
+                        ==
+                        PackageManager.PERMISSION_DENIED
         ) {
             ActivityCompat.requestPermissions(this,
                     new String[]{android.Manifest.permission.ACCESS_COARSE_LOCATION},
                     1);
+            ActivityCompat.requestPermissions(this,
+                    new String[]{android.Manifest.permission.ACCESS_FINE_LOCATION},
+                    1);
         } else {
-            mapController.requestLastKnownLocation();
+//            mapController.requestLastKnownLocation();
+            mapController.requestCurrentLocation();
         }
     }
 
@@ -126,7 +137,8 @@ ActivityCompat.OnRequestPermissionsResultCallback {
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
     @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        mapController.requestLastKnownLocation();
+//        mapController.requestLastKnownLocation();
+        mapController.requestCurrentLocation();
     }
 
     /**
@@ -314,7 +326,7 @@ ActivityCompat.OnRequestPermissionsResultCallback {
 
 
                 Plant plant = new Plant(label,
-                        mapController.getCurrentScreenLocation(), spinner.getSelectedItemPosition(), nbFeuilles);
+                        mapController.getCurrentScreenLocation(), spinner.getSelectedItemPosition() + 1, nbFeuilles);
 
                 controller.addEntry(plant);
 
@@ -477,6 +489,7 @@ ActivityCompat.OnRequestPermissionsResultCallback {
         googleMap.setMapStyle(MapStyleOptions.loadRawResourceStyle(this, R.raw.map_night));
 
         mapController.setMap(googleMap);
+        getLocationPermission();
 
         controller.retrieveEntries();
 

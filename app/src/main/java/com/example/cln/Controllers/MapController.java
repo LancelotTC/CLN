@@ -93,7 +93,7 @@ public class MapController implements ActivityCompat.OnRequestPermissionsResultC
     private final int MAX_ZOOM;
 
     {
-        MAX_ZOOM = 21;
+        MAX_ZOOM = 2;
     }
 
 
@@ -152,7 +152,8 @@ public class MapController implements ActivityCompat.OnRequestPermissionsResultC
      */
     public void setMap(GoogleMap googleMap) {
         this.googleMap = googleMap;
-        requestLastKnownLocation();
+//        requestLastKnownLocation();
+        requestCurrentLocation();
         setListeners();
     }
 
@@ -310,18 +311,24 @@ public class MapController implements ActivityCompat.OnRequestPermissionsResultC
         }
     }
 
-    private void requestCurrentLocation() {
-        LocationManager locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
-        locationManager.requestSingleUpdate(LocationManager.GPS_PROVIDER, locationListener, null);
+    @SuppressLint("MissingPermission")
+    public void requestCurrentLocation() {
+        if (!locationPermissionGranted) {
+            return;
+        }
 
-        LocationListener locationListener = new LocationListener() {
+        LocationManager locationManager =
+                (LocationManager) context.getSystemService(Context.LOCATION_SERVICE);
+
+
+        locationManager.requestSingleUpdate(LocationManager.GPS_PROVIDER, new LocationListener() {
             @Override
-            public void onLocationChanged(Location location) {
-                // Extract latitude and longitude from the location object
-                // Use the information and don't forget to remove location updates afterwards
-                locationManager.removeUpdates(locationListener);
+            public void onLocationChanged(@NonNull Location location) {
+                lastKnownLocation = location;
+                onLastKnownLocationAssigned();
+                locationManager.removeUpdates(this);
             }
-        };
+        }, null);
 
     }
 

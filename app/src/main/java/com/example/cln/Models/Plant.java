@@ -3,6 +3,7 @@ package com.example.cln.Models;
 import android.content.ContentValues;
 
 import com.example.cln.R;
+import com.example.cln.Shortcuts;
 import com.google.android.gms.maps.model.LatLng;
 
 import org.json.JSONException;
@@ -52,7 +53,25 @@ public class Plant extends Model {
         } catch (JSONException e) {
             throw new RuntimeException(e);
         }
+
+        Shortcuts.log("JSONObject", jsonObject);
         return jsonObject;
     }
 
+    public static Plant fromJSONObject(JSONObject jsonObject) {
+        try {
+            Plant plant = new Plant(
+                    jsonObject.getString("label"),
+                    new LatLng(jsonObject.getDouble("latitude"),
+                            jsonObject.getDouble("longitude")),
+                    jsonObject.getInt("growth_state_id"),
+                    jsonObject.getInt("leaf_amount")
+            );
+
+            plant.setId(jsonObject.getLong("plant_id"));
+            return plant;
+        } catch (JSONException e) {
+            throw new RuntimeException(e);
+        }
+    }
 }

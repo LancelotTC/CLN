@@ -3,6 +3,8 @@ package com.example.cln.AsyncTasks;
 import android.os.Handler;
 import android.os.Looper;
 
+import com.example.cln.Shortcuts;
+
 import org.json.JSONException;
 
 import java.util.concurrent.Callable;
@@ -42,6 +44,7 @@ public class TaskRunner <R> {
             }
             handler.post(() -> {
                 try {
+                    Shortcuts.log("HTTP result", result);
                     callback.onComplete(result);
                 } catch (JSONException e) {
                     throw new RuntimeException(e);

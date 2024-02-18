@@ -29,31 +29,28 @@ public class Controller {
 
     public void addEntry(Model model) {
         Marker marker = mapController.addMapMarker(model);
-        localAccess.addEntry(model, marker);
-        remoteAccess.add(model.toJSONObject());
+//        localAccess.addEntry(model, marker);
+        remoteAccess.add(model);
     }
 
     public void retrieveEntries() {
-        populateMap(localAccess.retrieveEntries());
+        remoteAccess.getAll();
+//        populateMap(localAccess.retrieveEntries());
     }
 
     public void populateMap(Model[] models) {
         for (Model model : models) {
             Marker marker = mapController.addMapMarker(model);
             marker.setTag(model.getId());
-            localAccess.addModel((Long) marker.getTag(), model);
+//            localAccess.addModel((Long) marker.getTag(), model);
         }
-    }
-
-    public void updateModel(Model model) {
-        localAccess.updateEntry(model);
     }
 
     public void updateModel(Marker marker) {
         Model model = getModel((Long) marker.getTag());
-
         model.setLatLng(marker.getPosition());
         localAccess.updateEntry(model);
+        remoteAccess.update(model);
     }
 
     private Model getModel(Long id) {
@@ -65,10 +62,12 @@ public class Controller {
         Model model = getModel((Long) marker.getTag());
         model.setLabel(label);
         localAccess.updateEntry(model);
+        remoteAccess.update(model);
     }
 
     public void deleteEntry(Marker selectedMarker) {
         localAccess.deleteEntry(selectedMarker);
         selectedMarker.remove();
+        remoteAccess.delete(getModel((Long) selectedMarker.getTag()));
     }
 }

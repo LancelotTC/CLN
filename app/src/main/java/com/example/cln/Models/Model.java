@@ -1,11 +1,13 @@
 package com.example.cln.Models;
 
+import android.content.ContentValues;
+
 import com.google.android.gms.maps.model.LatLng;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 
-public class Model implements ModelInterface {
+public abstract class Model {
     private Long id;
     private String label;
     private LatLng latLng;
@@ -16,17 +18,17 @@ public class Model implements ModelInterface {
         this.latLng = latLng;
     }
 
-    @Override
     public void setId(Long id) {
         this.id = id;
     }
 
-    @Override
     public Long getId() {
         return id;
     }
 
-    @Override
+    public abstract Integer getResourceId();
+    public abstract String getTableName();
+    public abstract ContentValues getContentValues();
     public String getLabel() {
         return label;
     }
@@ -35,12 +37,10 @@ public class Model implements ModelInterface {
         this.label = label;
     }
 
-    @Override
     public LatLng getLatLng() {
         return latLng;
     }
 
-    @Override
     public void setLatLng(LatLng latLng) {
         this.latLng = latLng;
     }
@@ -54,7 +54,7 @@ public class Model implements ModelInterface {
         } catch (JSONException e) {
             throw new RuntimeException(e);
         }
-
         return jsonObject;
     }
+
 }

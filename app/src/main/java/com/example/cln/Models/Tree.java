@@ -5,6 +5,9 @@ import android.content.ContentValues;
 import com.example.cln.R;
 import com.google.android.gms.maps.model.LatLng;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
 public class Tree extends Model {
 
     public Tree(String label, LatLng latLng) {
@@ -26,5 +29,20 @@ public class Tree extends Model {
         contentValues.put("longitude", getLatLng().longitude);
 
         return contentValues;
+    }
+
+    public static Tree fromJSONObject(JSONObject jsonObject) {
+        try {
+            Tree tree = new Tree(
+                    jsonObject.getString("label"),
+                    new LatLng(jsonObject.getDouble("latitude"),
+                            jsonObject.getDouble("longitude"))
+            );
+
+            tree.setId(jsonObject.getLong("fruit_tree_id"));
+            return tree;
+        } catch (JSONException e) {
+            throw new RuntimeException(e);
+        }
     }
 }
