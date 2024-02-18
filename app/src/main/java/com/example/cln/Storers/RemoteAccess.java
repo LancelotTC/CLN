@@ -61,7 +61,6 @@ public class RemoteAccess {
     }
 
     public void delete(Model model) {
-        Shortcuts.log("id", String.valueOf(model.getId()));
         executeRequest(Map.of("tables", model.getTableName(), "id", String.valueOf(model.getId())), "DELETE");
     }
 

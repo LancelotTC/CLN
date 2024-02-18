@@ -42,7 +42,7 @@ public class Controller {
         for (Model model : models) {
             Marker marker = mapController.addMapMarker(model);
             marker.setTag(model.getId());
-//            localAccess.addModel((Long) marker.getTag(), model);
+            localAccess.addModel((Long) marker.getTag(), model);
         }
     }
 
@@ -66,8 +66,8 @@ public class Controller {
     }
 
     public void deleteEntry(Marker selectedMarker) {
-        localAccess.deleteEntry(selectedMarker);
-        selectedMarker.remove();
+//        localAccess.deleteEntry(selectedMarker);
         remoteAccess.delete(getModel((Long) selectedMarker.getTag()));
+        selectedMarker.remove();
     }
 }
