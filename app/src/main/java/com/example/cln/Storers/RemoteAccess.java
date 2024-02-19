@@ -61,6 +61,7 @@ public class RemoteAccess {
     }
 
     public void delete(Model model) {
+        //
         executeRequest(Map.of("tables", model.getTableName(), "id", String.valueOf(model.getId())), "DELETE");
     }
 
