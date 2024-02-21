@@ -11,7 +11,7 @@
 //import android.widget.EditText;
 //import android.widget.LinearLayout;
 //
-//import com.example.cln.Controllers.MapController;
+//import com.example.cln.MapController;
 //import com.example.cln.Models.Composter;
 //import com.example.cln.Models.Filter;
 //import com.example.cln.Models.ModelInterface;
@@ -80,7 +80,7 @@
 //
 //            Plant plant = new Plant(label,
 //                    mapController.getCurrentScreenLocation(), growthState, leafAmount);
-//            mapController.addMapMarker(mapController.getCurrentScreenLocation(), label, resourceId);
+//            mapController.addMarker(mapController.getCurrentScreenLocation(), label, resourceId);
 //            // Store the plant in db
 //        });
 //

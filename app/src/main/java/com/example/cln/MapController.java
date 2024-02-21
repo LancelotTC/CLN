@@ -1,4 +1,4 @@
-package com.example.cln.Controllers;
+package com.example.cln;
 
 //import static androidx.appcompat.graphics.drawable.DrawableContainerCompat.Api21Impl.getResources;
 
@@ -22,10 +22,10 @@ import androidx.annotation.NonNull;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
-import com.example.cln.Lambda;
+import com.example.cln.Utils.Lambda;
 import com.example.cln.Models.Model;
-import com.example.cln.R;
-import com.example.cln.Shortcuts;
+import com.example.cln.Utils.Shortcuts;
+import com.example.cln.Utils.Tools;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.CameraUpdateFactory;
@@ -39,7 +39,6 @@ import com.google.android.gms.maps.model.Polygon;
 import com.google.android.gms.maps.model.PolygonOptions;
 import com.google.android.gms.tasks.Task;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Consumer;
@@ -47,7 +46,7 @@ import java.util.function.Consumer;
 /**
  * Controller specifically for the map object. Instantiates and manages everything on the map.
  */
-public class MapController implements ActivityCompat.OnRequestPermissionsResultCallback {
+public class MapController {
     /**
      * Static instance of class for Singleton design pattern
      */
@@ -195,24 +194,6 @@ public class MapController implements ActivityCompat.OnRequestPermissionsResultC
     }
 
     /**
-     * Gets the permission results (doesn't work)
-     * @param requestCode The request code passed in {@link #requestPermissions(
-     * android.app.Activity, String[], int)}
-     * @param permissions The requested permissions. Never null.
-     * @param grantResults The grant results for the corresponding permissions
-     *     which is either {@link android.content.pm.PackageManager#PERMISSION_GRANTED}
-     *     or {@link android.content.pm.PackageManager#PERMISSION_DENIED}. Never null.
-     *
-     */
-    @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
-                                           @NonNull int[] grantResults) {
-        Shortcuts.toast(context, requestCode + " " + Arrays.toString(permissions) + " " +
-                Arrays.toString(grantResults));
-    }
-
-
-    /**
      * Returns the selected marker on the map or null if it doesn't exist
      * @return Marker
      */
@@ -248,7 +229,7 @@ public class MapController implements ActivityCompat.OnRequestPermissionsResultC
             return;
         }
 
-        moveCamera(getCurrentLocation());
+        moveCamera(getCurrentLocation(), (int) googleMap.getMaxZoomLevel());
     }
 
     /**
@@ -269,20 +250,18 @@ public class MapController implements ActivityCompat.OnRequestPermissionsResultC
     }
 
     private void onLastKnownLocationAssigned() {
+        if (lastKnownLocation == null) {
+            requestCurrentLocation();
+            return;
+        }
         moveToCurrentLocation();
+    }
 
-        PolygonOptions polygonOptions = new PolygonOptions();
-        LatLng currentLocation = getCurrentLocation();
-
-        polygonOptions.add(
-                new LatLng(currentLocation.latitude + 0.000009, currentLocation.longitude),
-                new LatLng(currentLocation.latitude - 0.000009, currentLocation.longitude + 0.000009),
-                new LatLng(currentLocation.latitude - 0.000009, currentLocation.longitude)
-        );
-        polygonOptions.clickable(true);
-        polygonOptions.strokeWidth(5);
-
-        addPolygon(polygonOptions);
+    private void onCurrentLocationAssigned() {
+        if (lastKnownLocation == null) {
+            return;
+        }
+        moveToCurrentLocation();
     }
 
     /**
@@ -319,13 +298,11 @@ public class MapController implements ActivityCompat.OnRequestPermissionsResultC
 
         LocationManager locationManager =
                 (LocationManager) context.getSystemService(Context.LOCATION_SERVICE);
-
-
         locationManager.requestSingleUpdate(LocationManager.GPS_PROVIDER, new LocationListener() {
             @Override
             public void onLocationChanged(@NonNull Location location) {
                 lastKnownLocation = location;
-                onLastKnownLocationAssigned();
+                onCurrentLocationAssigned();
                 locationManager.removeUpdates(this);
             }
         }, null);
@@ -362,6 +339,22 @@ public class MapController implements ActivityCompat.OnRequestPermissionsResultC
         return BitmapDescriptorFactory.fromBitmap(bitmap);
     }
 
+    private BitmapDescriptor getBitmapDescriptor(int id) {
+        Drawable vectorDrawable = context.getDrawable(id);
+
+
+        int h = ((int) Tools.convertDpToPixel(42, context));
+        int w = ((int) Tools.convertDpToPixel(25, context));
+        assert vectorDrawable != null;
+        vectorDrawable.setBounds(0, 0, w, h);
+
+        Bitmap bm = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888);
+        Canvas canvas = new Canvas(bm);
+        vectorDrawable.draw(canvas);
+        return BitmapDescriptorFactory.fromBitmap(bm);
+    }
+
+
     /**
      * Attempt at making a method that accepts a drawable vector resource and returns a resized Bitmap
      * Method is either incomplete or broken. Do not use
@@ -379,7 +372,7 @@ public class MapController implements ActivityCompat.OnRequestPermissionsResultC
 
     /**
      * Adds a marker to the map and returns it. Since Models were implemented and thanks to the
-     * addMapMarker(Model model) overload, this method doesn't have to be public since the other one
+     * addMarker(Model model) overload, this method doesn't have to be public since the other one
      * is more convenient anyways.
      * @param latLng Position of the marker
      * @param title Label of the marker (which will show when selected)
@@ -387,7 +380,7 @@ public class MapController implements ActivityCompat.OnRequestPermissionsResultC
      * @return Marker
      */
     @NonNull
-    private Marker addMapMarker(LatLng latLng, String title, int resourceId) {
+    private Marker addMarker(LatLng latLng, String title, int resourceId) {
         MarkerOptions markerOptions = new MarkerOptions();
 
         markerOptions.position(latLng);
@@ -410,8 +403,8 @@ public class MapController implements ActivityCompat.OnRequestPermissionsResultC
      * @param model Any subtype of Model
      * @return Marker
      */
-    public Marker addMapMarker(Model model) {
-        return addMapMarker(model.getLatLng(), model.getLabel(), model.getResourceId());
+    public Marker addMarker(Model model) {
+        return addMarker(model.getLatLng(), model.getLabel(), model.getResourceId());
     }
 
     /**
@@ -487,5 +480,32 @@ public class MapController implements ActivityCompat.OnRequestPermissionsResultC
 
     public void releaseContext() {
         context = null;
+    }
+
+    public void loadHomeParcel() {
+        PolygonOptions polygonOptions = new PolygonOptions();
+
+        polygonOptions.add(
+                new LatLng(14.65370598, -61.00744924),
+                new LatLng(14.65374212, -61.00746832),
+                new LatLng(14.65382301, -61.00730208),
+                new LatLng(14.65419419, -61.00744231),
+                new LatLng(14.65422758, -61.00737443),
+                new LatLng(14.65425831, -61.00731196),
+                new LatLng(14.65436187, -61.00710134),
+                new LatLng(14.65395925, -61.00687656),
+                new LatLng(14.65388310, -61.00704925),
+                new LatLng(14.65383896, -61.00714952),
+                new LatLng(14.65379287, -61.00725409),
+                new LatLng(14.65375502, -61.00733992),
+                new LatLng(14.65370598, -61.00744924)
+        );
+
+        polygonOptions.strokeWidth(10);
+        googleMap.addPolygon(polygonOptions);
+
+        addMarker(new LatLng(14.65436187, -61.00710134),
+                "Maison", R.drawable.terrain_maison);
+
     }
 }

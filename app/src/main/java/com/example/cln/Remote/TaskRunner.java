@@ -1,9 +1,9 @@
-package com.example.cln.AsyncTasks;
+package com.example.cln.Remote;
 
 import android.os.Handler;
 import android.os.Looper;
 
-import com.example.cln.Shortcuts;
+import com.example.cln.Utils.Shortcuts;
 
 import org.json.JSONException;
 

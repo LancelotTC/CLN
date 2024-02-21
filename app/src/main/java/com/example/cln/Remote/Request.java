@@ -1,8 +1,8 @@
-package com.example.cln.AsyncTasks;
+package com.example.cln.Remote;
 
 import android.os.Build;
 
-import com.example.cln.Shortcuts;
+import com.example.cln.Utils.Shortcuts;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -16,9 +16,9 @@ import java.util.concurrent.Callable;
 
 public class Request implements Callable<String> {
     private final String METHOD;
-    private String response;
+    private String response = "";
     private final StringBuilder requestParameters = new StringBuilder();
-    private final String requestUrl = "http://192.168.217.70/cln/clnserver.php";
+    private final String requestUrl = "http://192.168.217.71/cln/clnserver.php";
 
     public Request(Map<String, String> parameters, String METHOD) {
         super();
@@ -94,7 +94,7 @@ public class Request implements Callable<String> {
             try {
                 assert reader != null;
                 reader.close();
-            } catch (NullPointerException | IOException ignored) {}
+            } catch (AssertionError | NullPointerException | IOException ignored) {}
         }
 
         response = response.replace("</br>", "");

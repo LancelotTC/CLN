@@ -1,16 +1,14 @@
-package com.example.cln.Storers;
+package com.example.cln;
 
 import android.content.Context;
 
-import com.example.cln.AsyncTasks.Request;
-import com.example.cln.AsyncTasks.TaskRunner;
-import com.example.cln.Controllers.Controller;
 import com.example.cln.Models.Composter;
 import com.example.cln.Models.Filter;
 import com.example.cln.Models.Model;
 import com.example.cln.Models.Plant;
 import com.example.cln.Models.Tree;
-import com.example.cln.Shortcuts;
+import com.example.cln.Remote.TaskRunner;
+import com.example.cln.Utils.Shortcuts;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -39,7 +37,7 @@ public class RemoteAccess {
     }
 
     private void executeRequest(Map<String, String> map, String method) {
-        taskRunner.executeAsync(new Request(map, method));
+//        taskRunner.executeAsync(new Request(map, method));
     }
 
     public void getAll() {
@@ -65,6 +63,8 @@ public class RemoteAccess {
     }
 
     public void onGotResponse(String output) throws JSONException {
+        Shortcuts.log("output", output);
+
         JSONObject response = new JSONObject(output);
 
         int code = response.getInt("code");

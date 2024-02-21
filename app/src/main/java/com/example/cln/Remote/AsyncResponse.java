@@ -1,4 +1,4 @@
-package com.example.cln.AsyncTasks;
+package com.example.cln.Remote;
 
 import org.json.JSONException;
 

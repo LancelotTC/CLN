@@ -1,10 +1,12 @@
-package com.example.cln.Storers;
+package com.example.cln;
 
 import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Build;
 
+import com.example.cln.Local.MySQLiteOpenHelper;
+import com.example.cln.Local.RegionSelector;
 import com.example.cln.Models.Composter;
 import com.example.cln.Models.Filter;
 import com.example.cln.Models.Model;

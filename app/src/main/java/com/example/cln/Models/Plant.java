@@ -3,7 +3,7 @@ package com.example.cln.Models;
 import android.content.ContentValues;
 
 import com.example.cln.R;
-import com.example.cln.Shortcuts;
+import com.example.cln.Utils.Shortcuts;
 import com.google.android.gms.maps.model.LatLng;
 
 import org.json.JSONException;

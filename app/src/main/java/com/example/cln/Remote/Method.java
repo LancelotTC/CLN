@@ -1,4 +1,4 @@
-package com.example.cln.AsyncTasks;
+package com.example.cln.Remote;
 
 public class Method {
     public static final String GET = "GET";

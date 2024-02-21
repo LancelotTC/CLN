@@ -1,4 +1,4 @@
-package com.example.cln;
+package com.example.cln.View;
 
 import android.view.View;
 import android.view.animation.Animation;

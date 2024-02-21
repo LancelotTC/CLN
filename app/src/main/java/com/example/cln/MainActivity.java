@@ -35,17 +35,17 @@ import androidx.core.app.ActivityCompat;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
-import com.example.cln.Controllers.Controller;
-import com.example.cln.Controllers.MapController;
 import com.example.cln.Models.Composter;
 import com.example.cln.Models.Filter;
 import com.example.cln.Models.Plant;
 import com.example.cln.Models.Tree;
-import com.example.cln.Storers.RemoteAccess;
+import com.example.cln.Utils.Lambda;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MapStyleOptions;
+import com.google.android.gms.maps.model.PolygonOptions;
 import com.google.android.material.shape.CornerFamily;
 import com.google.android.material.shape.MaterialShapeDrawable;
 import com.google.android.material.shape.ShapeAppearanceModel;
@@ -89,19 +89,27 @@ ActivityCompat.OnRequestPermissionsResultCallback {
 
         ViewCompat.setOnApplyWindowInsetsListener(window.getDecorView(), this);
 
-        SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
-                .findFragmentById(R.id.fragmentMap);
 
-        assert mapFragment != null;
-
-        mapFragment.getMapAsync(this);
 
         // Make notification bar disappear
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS,
                 WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS);
         getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_IMMERSIVE);
 
-        RemoteAccess.getInstance(this);
+        while (true) {
+            SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
+                    .findFragmentById(R.id.fragmentMap);
+
+            try{
+                assert mapFragment != null;
+            } catch (AssertionError e) {
+                e.printStackTrace();
+                continue;
+            }
+
+            mapFragment.getMapAsync(this);
+            break;
+        }
     }
 
     @Override
@@ -129,7 +137,7 @@ ActivityCompat.OnRequestPermissionsResultCallback {
                     1);
         } else {
 //            mapController.requestLastKnownLocation();
-            mapController.requestCurrentLocation();
+            mapController.requestLastKnownLocation();
         }
     }
 
@@ -138,7 +146,7 @@ ActivityCompat.OnRequestPermissionsResultCallback {
     @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
 //        mapController.requestLastKnownLocation();
-        mapController.requestCurrentLocation();
+        mapController.requestLastKnownLocation();
     }
 
     /**
@@ -443,6 +451,7 @@ ActivityCompat.OnRequestPermissionsResultCallback {
 
             assert roundedCorners != null;
             assert displayCutout != null;
+
             ShapeAppearanceModel fullyRoundedCorners = new ShapeAppearanceModel().toBuilder()
                     .setAllCorners(CornerFamily.ROUNDED, 99999)
                     .build();
@@ -459,16 +468,18 @@ ActivityCompat.OnRequestPermissionsResultCallback {
             @ColorInt int color = typedValue.data;
 
 
+            MaterialShapeDrawable loadingBarBackground = new MaterialShapeDrawable(fullyRoundedCorners);
+            loadingBarBackground.setFillColor(ColorStateList.valueOf(color));
+            findViewById(R.id.loadingBar).setBackground(loadingBarBackground);
+
             MaterialShapeDrawable txtSearchshapeDrawable = new MaterialShapeDrawable(fullyRoundedCorners);
-            MaterialShapeDrawable navViewshapeDrawable = new MaterialShapeDrawable(fitDeviceCorners);
             txtSearchshapeDrawable.setFillColor(ColorStateList.valueOf(color));
+            findViewById(R.id.txtSearch).setBackground(txtSearchshapeDrawable);
+
+            MaterialShapeDrawable navViewshapeDrawable = new MaterialShapeDrawable(fitDeviceCorners);
             navViewshapeDrawable.setFillColor(ColorStateList.valueOf(color));
+            findViewById(R.id.navView).setBackground(navViewshapeDrawable);
 
-            FrameLayout navView = findViewById(R.id.navView);
-            EditText txtSearch = findViewById(R.id.txtSearch);
-
-            txtSearch.setBackground(txtSearchshapeDrawable);
-            navView.setBackground(navViewshapeDrawable);
 
             ViewGroup.MarginLayoutParams layoutParams = (ViewGroup.MarginLayoutParams) txtSearch.getLayoutParams();
             layoutParams.topMargin = displayCutout.getSafeInsetTop() + 25;
@@ -477,6 +488,7 @@ ActivityCompat.OnRequestPermissionsResultCallback {
 
         return insets;
     }
+
 
     /**
      * Method that is called once the map is ready. Repopulates the map and sets map-related listeners.
@@ -488,11 +500,12 @@ ActivityCompat.OnRequestPermissionsResultCallback {
 
         googleMap.setMapStyle(MapStyleOptions.loadRawResourceStyle(this, R.raw.map_night));
 
-        mapController.setMap(googleMap);
         getLocationPermission();
+        mapController.setMap(googleMap);
+
+       mapController.loadHomeParcel();
 
         controller.retrieveEntries();
-
 
         // Opens up a update menu on marker clicked.
         mapController.setOnMarkerClickListener(m -> {

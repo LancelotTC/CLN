@@ -1,4 +1,4 @@
-package com.example.cln.Storers;
+package com.example.cln.Local;
 
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
