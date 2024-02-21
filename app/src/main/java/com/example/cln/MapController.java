@@ -22,8 +22,9 @@ import androidx.annotation.NonNull;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
-import com.example.cln.Utils.Lambda;
 import com.example.cln.Models.Model;
+import com.example.cln.Models.Plant;
+import com.example.cln.Utils.Lambda;
 import com.example.cln.Utils.Shortcuts;
 import com.example.cln.Utils.Tools;
 import com.google.android.gms.location.FusedLocationProviderClient;
@@ -108,7 +109,7 @@ public class MapController {
     }
 
     /**
-     * Method to get the sole instance for Singleton design pattern
+     * Public method to get the sole instance for Singleton design pattern
      * @param context Since the map is in MainActivity and this is the MapController, the only
      *                context will be MainActivity so it's fine to store it once and for all in the
      *                controller instead of passing it to every method call.
@@ -134,7 +135,7 @@ public class MapController {
 
             @Override
             public void onMarkerDragEnd(@NonNull Marker marker) {
-                Controller.getInstance(context).updateModel(marker);
+                Controller.getInstance(context).updateModelLocation(marker);
             }
 
             @Override
@@ -261,7 +262,10 @@ public class MapController {
         if (lastKnownLocation == null) {
             return;
         }
-        moveToCurrentLocation();
+        addMarker(new Plant("test",
+                new LatLng(lastKnownLocation.getLatitude(), lastKnownLocation.getLongitude()),
+                1, 0));
+//        moveToCurrentLocation();
     }
 
     /**
@@ -298,6 +302,13 @@ public class MapController {
 
         LocationManager locationManager =
                 (LocationManager) context.getSystemService(Context.LOCATION_SERVICE);
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            locationManager.getCurrentLocation(LocationManager.GPS_PROVIDER, null, command -> {}, l -> {
+                Shortcuts.log("location", l.getAccuracy() + " " + l);
+                Shortcuts.toast(context, l.getAccuracy() + " " + l);
+            });
+        }
         locationManager.requestSingleUpdate(LocationManager.GPS_PROVIDER, new LocationListener() {
             @Override
             public void onLocationChanged(@NonNull Location location) {
@@ -380,7 +391,7 @@ public class MapController {
      * @return Marker
      */
     @NonNull
-    private Marker addMarker(LatLng latLng, String title, int resourceId) {
+    public Marker addMarker(LatLng latLng, String title, int resourceId) {
         MarkerOptions markerOptions = new MarkerOptions();
 
         markerOptions.position(latLng);

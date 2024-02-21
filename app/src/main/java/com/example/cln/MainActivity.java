@@ -12,6 +12,7 @@ import android.content.res.Resources;
 import android.os.Bundle;
 import android.util.TypedValue;
 import android.view.DisplayCutout;
+import android.view.KeyEvent;
 import android.view.RoundedCorner;
 import android.view.View;
 import android.view.ViewGroup;
@@ -19,6 +20,7 @@ import android.view.ViewStub;
 import android.view.Window;
 import android.view.WindowInsets;
 import android.view.WindowManager;
+import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.AdapterView;
 import android.widget.EditText;
@@ -34,6 +36,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
+import androidx.fragment.app.FragmentActivity;
 
 import com.example.cln.Models.Composter;
 import com.example.cln.Models.Filter;
@@ -43,40 +46,112 @@ import com.example.cln.Utils.Lambda;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
-import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.maps.model.MapStyleOptions;
-import com.google.android.gms.maps.model.PolygonOptions;
 import com.google.android.material.shape.CornerFamily;
 import com.google.android.material.shape.MaterialShapeDrawable;
 import com.google.android.material.shape.ShapeAppearanceModel;
 
 import java.util.Objects;
 
+/**
+ * Main entry point for app
+ */
 public class MainActivity extends AppCompatActivity implements OnMapReadyCallback,
 androidx.core.view.OnApplyWindowInsetsListener, AdapterView.OnItemSelectedListener,
 ActivityCompat.OnRequestPermissionsResultCallback {
+    /**
+     * Controller instance
+     */
     private Controller controller;
+
+    /**
+     * MapController instance
+     */
     private MapController mapController;
+
+    /**
+     * Window instance used to get the window insets and get the corner radius of the device to
+     * adapt the UI.
+     */
     private Window window;
+
+    /**
+     * Used to open or close the soft keyboard view.
+     */
     private InputMethodManager inputMethodManager;
 
+    /**
+     * Search address widget
+     */
     private EditText txtSearch;
+
+    /**
+     * Navigation bar widget
+     */
     private FrameLayout navView;
+
+    /**
+     * Height of Navigation bar when folded
+     */
     private Integer foldedHeight;
+
+    /**
+     * Height of Navigation bar when expanded
+     */
     private Integer expandedHeight;
+
+    /**
+     * Whether the navigation bar is folded (0) or expanded (1). Default is folded (0).
+     */
     private int navState = 0;
 
+    /**
+     * Sub navigation bar that shows when the navigation bar is folded.
+     */
     private LinearLayout foldedNavView;
+
+    /**
+     * Sub navigation bar that shows when the navigation bar is expanded.
+     */
     private FrameLayout expandedNavView;
 
+    /**
+     * View on which information from clicked marker shows.
+     */
     private View inflatedInfo;
 
+    /**
+     * View with which creation of a plant is possible.
+     */
     private View inflatedPlant;
+
+    /**
+     * View with which creation of a tree is possible.
+     */
     private View inflatedTree;
+
+    /**
+     * View with which creation of a filter is possible.
+     */
     private View inflatedFilter;
+
+    /**
+     * View with which creation of a composter is possible.
+     */
     private View inflatedComposter;
 
+    /**
+     * Array that stores all 5 of the aforementioned views.
+     */
     private View[] allInflated;
+
+    /**
+     * Method that is called at the start of the activity.
+     * Check {@link FragmentActivity#onCreate(Bundle)} for further docs.
+     * @param savedInstanceState If the activity is being re-initialized after
+     *     previously being shut down then this Bundle contains the data it most
+     *     recently supplied in {@link #onSaveInstanceState}.  <b><i>Note: Otherwise it is null.</i></b>
+     *
+     */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -112,11 +187,20 @@ ActivityCompat.OnRequestPermissionsResultCallback {
         }
     }
 
+    /**
+     * Used to release (unreference) the context (MainActivity.this) from the mapController
+     * (otherwise it can become a memory leak)
+     */
     @Override
     protected void onDestroy() {
         mapController.releaseContext();
         super.onDestroy();
     }
+
+    /**
+     * Checks whether all location permissions were granted: requests current location if yes,
+     * otherwise asks for them.
+     */
     protected void getLocationPermission() {
         if (
                 ActivityCompat.checkSelfPermission(this,
@@ -141,6 +225,16 @@ ActivityCompat.OnRequestPermissionsResultCallback {
         }
     }
 
+    /**
+     * Callback to when permission were granted or denied. Requests the current location if granted.
+     * @param requestCode The request code passed in {@link #requestPermissions(
+     * android.app.Activity, String[], int)}
+     * @param permissions The requested permissions. Never null.
+     * @param grantResults The grant results for the corresponding permissions
+     *     which is either {@link android.content.pm.PackageManager#PERMISSION_GRANTED}
+     *     or {@link android.content.pm.PackageManager#PERMISSION_DENIED}. Never null.
+     *
+     */
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
     @NonNull int[] grantResults) {
@@ -185,6 +279,10 @@ ActivityCompat.OnRequestPermissionsResultCallback {
         };
     }
 
+    /**
+     * Shows the soft keyboard and gives the focus to the EditText widget that is visible.
+     * @param editText
+     */
     protected void requestFocus(EditText editText) {
         editText.post(() -> {
             editText.requestFocus();
@@ -192,6 +290,10 @@ ActivityCompat.OnRequestPermissionsResultCallback {
         });
     }
 
+    /**
+     * Clears the focus from the EditText that had it and hides the soft keyboard
+     * @param editText
+     */
     protected void clearFocus(EditText editText) {
         editText.clearFocus();
         inputMethodManager.hideSoftInputFromWindow(editText.getWindowToken(), 0);
@@ -428,6 +530,20 @@ ActivityCompat.OnRequestPermissionsResultCallback {
                 clearFocus(txtComposterName);
             });
         });
+
+        findViewById(R.id.ibtnCurrentLocation).setOnClickListener(v -> {
+            mapController.requestCurrentLocation();
+        });
+        ((EditText)findViewById(R.id.txtSearch)).setOnEditorActionListener(new TextView.OnEditorActionListener() {
+            @Override
+            public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
+                if (actionId == EditorInfo.IME_ACTION_DONE) {
+                    controller.moveToAddress(v.getText().toString(), MainActivity.this);
+                    return true;
+                }
+                return false;
+            }
+        });
     }
 
     /**
@@ -468,13 +584,17 @@ ActivityCompat.OnRequestPermissionsResultCallback {
             @ColorInt int color = typedValue.data;
 
 
+            MaterialShapeDrawable txtSearchshapeDrawable = new MaterialShapeDrawable(fullyRoundedCorners);
+            txtSearchshapeDrawable.setFillColor(ColorStateList.valueOf(color));
+            findViewById(R.id.txtSearch).setBackground(txtSearchshapeDrawable);
+
             MaterialShapeDrawable loadingBarBackground = new MaterialShapeDrawable(fullyRoundedCorners);
             loadingBarBackground.setFillColor(ColorStateList.valueOf(color));
             findViewById(R.id.loadingBar).setBackground(loadingBarBackground);
 
-            MaterialShapeDrawable txtSearchshapeDrawable = new MaterialShapeDrawable(fullyRoundedCorners);
-            txtSearchshapeDrawable.setFillColor(ColorStateList.valueOf(color));
-            findViewById(R.id.txtSearch).setBackground(txtSearchshapeDrawable);
+            MaterialShapeDrawable ibtnCurrentLocationshapeDrawable = new MaterialShapeDrawable(fullyRoundedCorners);
+            ibtnCurrentLocationshapeDrawable.setFillColor(ColorStateList.valueOf(color));
+            findViewById(R.id.ibtnCurrentLocation).setBackground(ibtnCurrentLocationshapeDrawable);
 
             MaterialShapeDrawable navViewshapeDrawable = new MaterialShapeDrawable(fitDeviceCorners);
             navViewshapeDrawable.setFillColor(ColorStateList.valueOf(color));
@@ -489,35 +609,37 @@ ActivityCompat.OnRequestPermissionsResultCallback {
         return insets;
     }
 
-
     /**
      * Method that is called once the map is ready. Repopulates the map and sets map-related listeners.
      * @param googleMap
      */
     @Override
     public void onMapReady(@NonNull GoogleMap googleMap) {
+        findViewById(R.id.loadingBar).setVisibility(View.GONE);
+
         setListeners();
 
-        googleMap.setMapStyle(MapStyleOptions.loadRawResourceStyle(this, R.raw.map_night));
+//        googleMap.setMapStyle(MapStyleOptions.loadRawResourceStyle(this, R.raw.map_night));
 
         getLocationPermission();
         mapController.setMap(googleMap);
 
-       mapController.loadHomeParcel();
+        mapController.loadHomeParcel();
 
         controller.retrieveEntries();
 
         // Opens up a update menu on marker clicked.
         mapController.setOnMarkerClickListener(m -> {
+
             toggleVisibility(inflatedInfo);
             expandNavView();
             ((TextView)inflatedInfo.findViewById(R.id.txtInfoLabel)).setText(
-                    (CharSequence) (Objects.requireNonNull(m.getTitle()).isEmpty() ? "Untitled" : m.getTitle())
+                    (CharSequence) (Objects.requireNonNull(m.getTitle()).isEmpty() ? "Sans nom" : m.getTitle())
             );
 
             EditText txtInfoName = ((EditText) inflatedInfo.findViewById(R.id.txtInfoName));
             txtInfoName.setText(
-                    (CharSequence) (Objects.requireNonNull(m.getTitle()).isEmpty() ? "Untitled" : m.getTitle())
+                    (CharSequence) (Objects.requireNonNull(m.getTitle()).isEmpty() ? "Sans nom" : m.getTitle())
             );
             requestFocus(txtInfoName);
 
@@ -593,5 +715,4 @@ ActivityCompat.OnRequestPermissionsResultCallback {
     public void onNothingSelected(AdapterView<?> parent) {
 
     }
-
 }

@@ -7,7 +7,7 @@ import com.example.cln.Models.Filter;
 import com.example.cln.Models.Model;
 import com.example.cln.Models.Plant;
 import com.example.cln.Models.Tree;
-import com.example.cln.Remote.TaskRunner;
+import com.example.cln.Utils.TaskRunner;
 import com.example.cln.Utils.Shortcuts;
 
 import org.json.JSONArray;
@@ -17,17 +17,41 @@ import org.json.JSONObject;
 import java.util.ArrayList;
 import java.util.Map;
 
+/**
+ * "Controller" responsible of sending requests to the database and receiving outputs.
+ */
 public class RemoteAccess {
 
+    /**
+     * Static instance of class for Singleton design pattern
+     */
     private static RemoteAccess instance;
+
+    /**
+     * {@link TaskRunner} instance used to asynchronously handle any tasks
+     */
     private final TaskRunner<String> taskRunner;
+
+    /**
+     * Contains the context to avoid having to include it in every single method call.
+     * Check {@link MapController#context} for risks of storing a reference here.
+     */
     private final Context context;
 
+    /**
+     * Class constructor
+     * @param context Activity in which the instance should be used.
+     */
     private RemoteAccess(Context context) {
         this.context = context;
         taskRunner = new TaskRunner<>(this::onGotResponse);
     }
 
+    /**
+     * Public method to get the sole instance for Singleton design pattern
+     * @param context Activity in which the instance should be used.
+     * @return RemoteAccess
+     */
     public static RemoteAccess getInstance(Context context) {
         if (instance == null) {
             instance = new RemoteAccess(context);
@@ -36,32 +60,63 @@ public class RemoteAccess {
         return instance;
     }
 
+    /**
+     * Convenience method that allows us to avoid boiler plate code.
+     * @param map map of the parameters with their values
+     * @param method Request method: GET, POST, PUT, DELETE supported by the server for now.
+     */
     private void executeRequest(Map<String, String> map, String method) {
 //        taskRunner.executeAsync(new Request(map, method));
     }
 
+    /**
+     * Requests all the entries of all the relevant tables in the database
+     */
     public void getAll() {
         executeRequest(Map.of("tables", "*"), "GET");
     }
 
+    @Deprecated
     public void getOne(String id) {
         executeRequest(Map.of("id", id), "GET");
     }
 
+    /**
+     * Requests the insertion of a singular Model. Corresponding table with be inferred
+     * from the getTableName method present in all child classes of Model.
+     * @param model Model to be added
+     */
     public void add(Model model) {
         executeRequest(Map.of("tables", model.getTableName(),
                 "data", model.toJSONObject().toString()), "POST");
     }
 
+    /**
+     * Requests the update of a model. Corresponding id and table will be inferred from
+     * the {@link Model#getId()} method and getTableName method present in all child
+     * classes of Model
+     * @param model Model to be updated
+     */
      public void update(Model model) {
         executeRequest(Map.of("tables", model.getTableName(), "id", String.valueOf(model.getId()),
                 "data", model.toJSONObject().toString()), "PUT");
     }
 
+    /**
+     * Requests the deletion of a model. Corresponding id and table will be inferred from
+     * the {@link Model#getId()} method and getTableName method present in all child
+     * classes of Model
+     * @param model Model to be deleted
+     */
     public void delete(Model model) {
         executeRequest(Map.of("tables", model.getTableName(), "id", String.valueOf(model.getId())), "DELETE");
     }
 
+    /**
+     * Callback method that handles the response and populates the map if GET method used.
+     * @param output JSON output from server
+     * @throws JSONException Sometimes the response isn't JSON valid.
+     */
     public void onGotResponse(String output) throws JSONException {
         Shortcuts.log("output", output);
 

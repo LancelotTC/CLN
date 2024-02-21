@@ -9,15 +9,30 @@ import com.google.android.gms.maps.model.LatLng;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-public class Plant extends Model {
+public class Plant extends Model implements ModelInterface {
     private final Integer growthState;
     private final Integer leafAmount;
+    private final int resourceId;
 
     public Plant(String label, LatLng latLng, Integer growthState, Integer leafAmount) {
         super(label, latLng);
 
         this.growthState = growthState;
         this.leafAmount = leafAmount;
+
+        switch (growthState) {
+            case 1:
+                resourceId = R.drawable.plant_ps_icon;
+                break;
+            case 2:
+                resourceId = R.drawable.plant_ppl_icon;
+                break;
+            case 3:
+                resourceId = R.drawable.plant_icon;
+                break;
+            default:
+                throw new RuntimeException("(User thrown) Invalid growthState: " + growthState);
+        }
     }
 
     public Integer getGrowthState() {
@@ -28,7 +43,7 @@ public class Plant extends Model {
         return leafAmount;
     }
     public Integer getResourceId() {
-        return R.drawable.plant_icon;
+        return resourceId;
     }
     public String getTableName() {
         return "plant";

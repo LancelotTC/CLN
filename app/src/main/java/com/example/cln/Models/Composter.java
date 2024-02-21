@@ -8,7 +8,10 @@ import com.google.android.gms.maps.model.LatLng;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-public class Composter extends Model {
+/**
+ * Composter model.
+ */
+public class Composter extends Model implements ModelInterface {
     public Composter(String label, LatLng latLng) {
         super(label, latLng);
     }

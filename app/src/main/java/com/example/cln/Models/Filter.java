@@ -8,7 +8,7 @@ import com.google.android.gms.maps.model.LatLng;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-public class Filter extends Model {
+public class Filter extends Model implements ModelInterface {
     public Filter(String label, LatLng latLng) {
         super(label, latLng);
     }

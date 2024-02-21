@@ -8,7 +8,7 @@ import com.google.android.gms.maps.model.LatLng;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-public class Tree extends Model {
+public class Tree extends Model implements ModelInterface {
 
     public Tree(String label, LatLng latLng) {
         super(label, latLng);
