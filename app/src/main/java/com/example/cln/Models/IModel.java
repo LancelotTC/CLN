@@ -1,6 +1,6 @@
 package com.example.cln.Models;
 
-public interface ModelInterface {
+public interface IModel {
     String getTableName();
     Integer getResourceId();
 }

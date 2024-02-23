@@ -42,14 +42,15 @@ import com.example.cln.Models.Composter;
 import com.example.cln.Models.Filter;
 import com.example.cln.Models.Plant;
 import com.example.cln.Models.Tree;
-import com.example.cln.Utils.Lambda;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.LatLng;
 import com.google.android.material.shape.CornerFamily;
 import com.google.android.material.shape.MaterialShapeDrawable;
 import com.google.android.material.shape.ShapeAppearanceModel;
 
+import java.util.ArrayList;
 import java.util.Objects;
 
 /**
@@ -113,6 +114,11 @@ ActivityCompat.OnRequestPermissionsResultCallback {
      * Sub navigation bar that shows when the navigation bar is expanded.
      */
     private FrameLayout expandedNavView;
+
+    /**
+     * View on which information from clicked polygon shows.
+     */
+    private View inflatedArea;
 
     /**
      * View on which information from clicked marker shows.
@@ -261,6 +267,8 @@ ActivityCompat.OnRequestPermissionsResultCallback {
         foldedNavView = findViewById(R.id.foldedNavView);
         expandedNavView = findViewById(R.id.expandedNavView);
 
+        inflatedArea = ((ViewStub)findViewById(R.id.areaStub)).inflate();
+
         inflatedInfo = ((ViewStub)findViewById(R.id.infoStub)).inflate();
 
         inflatedPlant = ((ViewStub)findViewById(R.id.plantStub)).inflate();
@@ -272,6 +280,8 @@ ActivityCompat.OnRequestPermissionsResultCallback {
         inflatedComposter = ((ViewStub)findViewById(R.id.composterStub)).inflate();
 
         allInflated = new View[] {
+                inflatedArea,
+                inflatedInfo,
                 inflatedPlant,
                 inflatedTree,
                 inflatedFilter,
@@ -399,9 +409,7 @@ ActivityCompat.OnRequestPermissionsResultCallback {
      * @param inflated
      */
     protected void toggleVisibility(View inflated) {
-        for (View view : allInflated) {
-            view.setVisibility(View.INVISIBLE);
-        }
+        for (View view : allInflated) {view.setVisibility(View.GONE);}
         inflated.setVisibility(View.VISIBLE);
     }
 
@@ -413,40 +421,75 @@ ActivityCompat.OnRequestPermissionsResultCallback {
         expandedHeight = foldedHeight * 3;
 
         findViewById(R.id.btnPlant).setOnClickListener(v -> {
-            expandNavView();
+            foldedNavView.setVisibility(View.GONE);
+            inflatedArea.setVisibility(View.VISIBLE);
 
-            EditText txtPlantName = ((EditText) inflatedPlant.findViewById(R.id.txtPlantName));
-            requestFocus(txtPlantName);
+            Placer placer = new Placer(this);
 
-            toggleVisibility(inflatedPlant);
-            Spinner spinner = inflatedPlant.findViewById(R.id.spinnerGrowthState);
-            spinner.setOnItemSelectedListener(this);
-
-
-            inflatedPlant.findViewById(R.id.btnOkPlant).setOnClickListener(view -> {
-                MapController mapController = MapController.getInstance(MainActivity.this);
-                String label = txtPlantName.getText().toString();
-
-                int nbFeuilles = 0;
-
-                try {
-                    nbFeuilles = Integer.parseInt(((TextView) findViewById(R.id.txtNbFeuilles))
-                            .getText().toString());
-                } catch (NumberFormatException ignored) {}
-
-
-                Plant plant = new Plant(label,
-                        mapController.getCurrentScreenLocation(), spinner.getSelectedItemPosition() + 1, nbFeuilles);
-
-                controller.addEntry(plant);
-
-                foldNavView();
-                clearFocus(txtPlantName);
+            mapController.setOnMapClickListener(latLng -> {
+                placer.addPoint(mapController.addMarker(
+                        latLng, "Marker for plant",
+                        R.drawable.point_icon)
+                );
             });
 
-            inflatedPlant.findViewById(R.id.btnCancelPlant).setOnClickListener(v1 -> {
-                foldNavView();
-                clearFocus(txtPlantName);
+            inflatedArea.findViewById(R.id.btnPlaceArea).setOnClickListener(v1 -> {
+                placer.createPolygon();
+
+                foldedNavView.setVisibility(View.GONE);
+                inflatedArea.setVisibility(View.VISIBLE);
+                expandNavView();
+
+                EditText txtPlantName = ((EditText) inflatedPlant.findViewById(R.id.txtPlantName));
+                requestFocus(txtPlantName);
+
+                toggleVisibility(inflatedPlant);
+                Spinner spinner = inflatedPlant.findViewById(R.id.spinnerGrowthState);
+                spinner.setOnItemSelectedListener(this);
+
+
+                inflatedPlant.findViewById(R.id.btnOkPlant).setOnClickListener(view -> {
+                    ArrayList<LatLng> points = (ArrayList<LatLng>) placer.getPolygon().getPoints();
+                    if (points.size() == 0) {
+                        return;
+                    }
+                    MapController mapController = MapController.getInstance(MainActivity.this);
+                    placer.removeMarkers();
+                    String label = txtPlantName.getText().toString();
+
+                    mapController.setOnMapClickListener((latLng) -> {
+                        Runnable foldNavView = MainActivity.this::foldNavView;
+                        foldNavView.run();
+                    });
+
+                    int nbFeuilles = 0;
+
+                    try {
+                        nbFeuilles = Integer.parseInt(((TextView) findViewById(R.id.txtNbFeuilles))
+                                .getText().toString());
+                    } catch (NumberFormatException ignored) {}
+
+
+                    Plant plant = new Plant(
+                            label,
+                            points,
+                            Integer.valueOf(((EditText) findViewById(R.id.txtAmount)).getText()
+                                    .toString()),
+
+                            spinner.getSelectedItemPosition() + 1, nbFeuilles
+                    );
+
+
+                    controller.addEntry(plant);
+
+                    foldNavView();
+                    clearFocus(txtPlantName);
+                });
+
+                inflatedPlant.findViewById(R.id.btnCancelPlant).setOnClickListener(v2 -> {
+                    foldNavView();
+                    clearFocus(txtPlantName);
+                });
             });
         });
 
@@ -481,7 +524,7 @@ ActivityCompat.OnRequestPermissionsResultCallback {
         });
 
         findViewById(R.id.btnFilter).setOnClickListener(v -> {
-            inflatedFilter.setVisibility(View.INVISIBLE);
+            inflatedFilter.setVisibility(View.GONE);
 
             expandNavView();
             toggleVisibility(inflatedFilter);
@@ -684,8 +727,8 @@ ActivityCompat.OnRequestPermissionsResultCallback {
         });
 
         // Folds the menu back to the navigation buttons on map clicked (exits the marker update menu)
-        Lambda task = this::foldNavView;
-        mapController.setOnMapClickListener(task);
+//        Lambda task = this::foldNavView;
+//        mapController.setOnMapClickListener(task);
 
     }
 

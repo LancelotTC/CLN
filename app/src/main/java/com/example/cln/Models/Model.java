@@ -1,21 +1,18 @@
 package com.example.cln.Models;
 
-import android.content.ContentValues;
-
-import com.google.android.gms.maps.model.LatLng;
-
 import org.json.JSONException;
 import org.json.JSONObject;
 
 public abstract class Model {
     private Long id;
     private String label;
-    private LatLng latLng;
+    private Integer resourceId;
+    private final String tableName;
 
-
-    public Model(String label, LatLng latLng) {
+    public Model(String label, Integer resourceId, String tableName) {
         this.label = label;
-        this.latLng = latLng;
+        this.resourceId = resourceId;
+        this.tableName = tableName;
     }
 
     public void setId(Long id) {
@@ -26,9 +23,19 @@ public abstract class Model {
         return id;
     }
 
-    public abstract Integer getResourceId();
-    public abstract String getTableName();
-    public abstract ContentValues getContentValues();
+    public Integer getResourceId() {
+        return resourceId;
+    }
+
+    public void setResourceId(Integer resourceId) {
+        this.resourceId = resourceId;
+    }
+
+    public String getTableName() {
+        return tableName;
+    }
+
+//    public abstract ContentValues getContentValues();
     public String getLabel() {
         return label;
     }
@@ -37,20 +44,10 @@ public abstract class Model {
         this.label = label;
     }
 
-    public LatLng getLatLng() {
-        return latLng;
-    }
-
-    public void setLatLng(LatLng latLng) {
-        this.latLng = latLng;
-    }
-
     public JSONObject toJSONObject() {
         JSONObject jsonObject = new JSONObject();
         try {
             jsonObject.put("label", label);
-            jsonObject.put("latitude", getLatLng().latitude);
-            jsonObject.put("longitude", getLatLng().longitude);
         } catch (JSONException e) {
             throw new RuntimeException(e);
         }

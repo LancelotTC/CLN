@@ -58,6 +58,14 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent">
 
+        <ViewStub
+            android:id="@+id/areaStub"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_gravity="center"
+            android:layout="@layout/activity_new_area"
+            android:visibility="gone" />
+
         <FrameLayout
             android:id="@+id/expandedNavView"
             android:layout_width="match_parent"
@@ -71,7 +79,7 @@
                 android:layout_height="match_parent"
                 android:layout_gravity="center"
                 android:layout="@layout/activity_model_info"
-                android:visibility="invisible" />
+                android:visibility="gone" />
 
             <ViewStub
                 android:id="@+id/plantStub"
@@ -79,7 +87,7 @@
                 android:layout_height="match_parent"
                 android:layout_gravity="center"
                 android:layout="@layout/activity_new_plant"
-                android:visibility="invisible" />
+                android:visibility="gone" />
 
             <ViewStub
                 android:id="@+id/treeStub"
@@ -87,7 +95,7 @@
                 android:layout_height="match_parent"
                 android:layout_gravity="center"
                 android:layout="@layout/activity_new_tree"
-                android:visibility="invisible" />
+                android:visibility="gone" />
 
             <ViewStub
                 android:id="@+id/filterStub"
@@ -95,7 +103,7 @@
                 android:layout_height="match_parent"
                 android:layout_gravity="center"
                 android:layout="@layout/activity_new_filter"
-                android:visibility="invisible" />
+                android:visibility="gone" />
 
             <ViewStub
                 android:id="@+id/composterStub"
@@ -103,7 +111,7 @@
                 android:layout_height="match_parent"
                 android:layout_gravity="center"
                 android:layout="@layout/activity_new_composter"
-                android:visibility="invisible" />
+                android:visibility="gone" />
         </FrameLayout>
 
         <LinearLayout

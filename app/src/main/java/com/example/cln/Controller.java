@@ -4,10 +4,13 @@ import android.content.Context;
 import android.location.Address;
 import android.location.Geocoder;
 
+import com.example.cln.Models.AreaModel;
 import com.example.cln.Models.Model;
+import com.example.cln.Models.PointModel;
 import com.example.cln.Utils.Shortcuts;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
+import com.google.android.gms.maps.model.Polygon;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -30,30 +33,29 @@ public class Controller {
      */
     private final MapController mapController;
 
-    /**
-     * Static instance of LocalAccess
-     */
-    private final LocalAccess localAccess;
+//    /**
+//     * Static instance of LocalAccess
+//     */
+//    private final LocalAccess localAccess;
 
     /**
      * Static instance of RemoteAccess
      */
     private final RemoteAccess remoteAccess;
 
-    /**
-     * HashMap that maps all marker tags with their corresponding model.
-     */
-    private final HashMap<Long, Model> objectToMarker;
 
+    private final HashMap<Long, PointModel> pointToMarker;
+    private final HashMap<Long, AreaModel> areaToMarker;
     /**
      * Private class constructor. Get instance with {#getInstance}
      * @param context Required to instanciate all other subcontrollers
      */
     private Controller(Context context) {
         mapController = MapController.getInstance(context);
-        localAccess = LocalAccess.getInstance(context);
+//        localAccess = LocalAccess.getInstance(context);
         remoteAccess = RemoteAccess.getInstance(context);
-        objectToMarker = new HashMap<>();
+        pointToMarker = new HashMap<>();
+        areaToMarker = new HashMap<>();
     }
 
     /**
@@ -74,10 +76,17 @@ public class Controller {
      * @param model Any child instance of Model
      */
     public void addEntry(Model model) {
-        Marker marker = mapController.addMarker(model);
-//        localAccess.addEntry(model, marker);
-        objectToMarker.put((Long) marker.getTag(), model);
-        remoteAccess.add(model);
+        if (model instanceof PointModel) {
+            Marker marker = mapController.addMarker((PointModel) model);
+            marker.setTag(model.getId());
+            pointToMarker.put((Long) marker.getTag(), (PointModel) model);
+        }
+        else if (model instanceof AreaModel) {
+            Polygon polygon = mapController.addPolygon((AreaModel) model);
+            polygon.setTag(model.getId());
+
+            areaToMarker.put((Long) polygon.getTag(), (AreaModel) model);
+        }
     }
 
     /**
@@ -94,10 +103,7 @@ public class Controller {
      */
     public void populateMap(Model[] models) {
         for (Model model : models) {
-            Marker marker = mapController.addMarker(model);
-            marker.setTag(model.getId());
-            objectToMarker.put((Long) marker.getTag(), model);
-
+            addEntry(model);
             // localAccess.addModel((Long) marker.getTag(), model);
         }
 
@@ -110,10 +116,9 @@ public class Controller {
      * @param marker Marker associated with a Model
      */
     public void updateModelLocation(Marker marker) {
-        Model model = getModel(marker);
-        model.setLatLng(marker.getPosition());
-//        localAccess.updateEntry(model);
-        remoteAccess.update(model);
+        PointModel pointModel = getPointModel(marker);
+        pointModel.setLatLng(marker.getPosition());
+        remoteAccess.update(pointModel);
     }
 
     /**
@@ -121,9 +126,13 @@ public class Controller {
      * @param marker Marker associated with a Model
      * @return Model
      */
-    private Model getModel(Marker marker) {
+    private PointModel getPointModel(Marker marker) {
 //        return localAccess.getModel(id);
-        return objectToMarker.get((Long) marker.getTag());
+        return pointToMarker.get((Long) marker.getTag());
+    }
+
+    private AreaModel getAreaModel(Polygon polygon) {
+        return areaToMarker.get((Long) polygon.getTag());
     }
 
     /**
@@ -135,10 +144,15 @@ public class Controller {
      */
     public void updateEntry(Marker marker, String label, boolean draggable) {
         mapController.updateMarker(marker, label, draggable);
-        Model model = getModel(marker);
+        Model model = getPointModel(marker);
         model.setLabel(label);
-//        localAccess.updateEntry(model);
         remoteAccess.update(model);
+    }
+
+    public void updatePolygon(Polygon polygon, String label) {
+        AreaModel areaModel = getAreaModel(polygon);
+        areaModel.setLabel(label);
+        remoteAccess.update(areaModel);
     }
 
     /**
@@ -147,8 +161,8 @@ public class Controller {
      */
     public void deleteEntry(Marker selectedMarker) {
 //        localAccess.deleteEntry(selectedMarker);
-        remoteAccess.delete(getModel(selectedMarker));
-        objectToMarker.remove((Long) selectedMarker.getTag());
+        remoteAccess.delete(getPointModel(selectedMarker));
+        pointToMarker.remove((Long) selectedMarker.getTag());
         selectedMarker.remove();
     }
 
@@ -165,6 +179,7 @@ public class Controller {
             assert addresses != null;
             assert addresses.size() > 0;
             LatLng newLocation = new LatLng(addresses.get(0).getLatitude(), addresses.get(0).getLongitude());
+
             Shortcuts.log("Address",
                     addresses.get(0).getSubAdminArea() + " getLocality" + // Le Lamentin
                     addresses.get(0).getPhone() + " getFeatureName" + // 119

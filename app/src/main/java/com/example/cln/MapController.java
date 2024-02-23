@@ -22,9 +22,8 @@ import androidx.annotation.NonNull;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
-import com.example.cln.Models.Model;
-import com.example.cln.Models.Plant;
-import com.example.cln.Utils.Lambda;
+import com.example.cln.Models.AreaModel;
+import com.example.cln.Models.PointModel;
 import com.example.cln.Utils.Shortcuts;
 import com.example.cln.Utils.Tools;
 import com.google.android.gms.location.FusedLocationProviderClient;
@@ -93,7 +92,7 @@ public class MapController {
     private final int MAX_ZOOM;
 
     {
-        MAX_ZOOM = 2;
+        MAX_ZOOM = 21;
     }
 
 
@@ -262,10 +261,7 @@ public class MapController {
         if (lastKnownLocation == null) {
             return;
         }
-        addMarker(new Plant("test",
-                new LatLng(lastKnownLocation.getLatitude(), lastKnownLocation.getLongitude()),
-                1, 0));
-//        moveToCurrentLocation();
+        moveToCurrentLocation();
     }
 
     /**
@@ -414,8 +410,8 @@ public class MapController {
      * @param model Any subtype of Model
      * @return Marker
      */
-    public Marker addMarker(Model model) {
-        return addMarker(model.getLatLng(), model.getLabel(), model.getResourceId());
+    public Marker addMarker(PointModel pointModel) {
+        return addMarker(pointModel.getLatLng(), pointModel.getLabel(), pointModel.getResourceId());
     }
 
     /**
@@ -435,6 +431,12 @@ public class MapController {
      * @return Polygon
      */
     public Polygon addPolygon(PolygonOptions polygonOptions) {
+        return googleMap.addPolygon(polygonOptions);
+    }
+
+    public Polygon addPolygon(AreaModel areaModel) {
+        PolygonOptions polygonOptions = new PolygonOptions();
+        polygonOptions.addAll(areaModel.getLatLngs());
         return googleMap.addPolygon(polygonOptions);
     }
 
@@ -463,12 +465,14 @@ public class MapController {
      * Defines the setOnMapClickListener listener.
      * @param func Custom Lambda type that accepts no arguments and returns nothing.
      */
-    public void setOnMapClickListener(Lambda func) {
+    public void setOnMapClickListener(Consumer<LatLng> func) {
         googleMap.setOnMapClickListener(latLng -> {
-            func.run();
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                func.accept(latLng);
+            }
             selectedMarker = null;
         });
-
+        // TODO: reimplement this function
         googleMap.setOnPolygonClickListener(polygon -> {
             Shortcuts.toast(context, polygon.getPoints());
             List<LatLng> points = polygon.getPoints();

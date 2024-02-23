@@ -14,7 +14,7 @@
 //import com.example.cln.MapController;
 //import com.example.cln.Models.Composter;
 //import com.example.cln.Models.Filter;
-//import com.example.cln.Models.ModelInterface;
+//import com.example.cln.Models.IModel;
 //import com.example.cln.Models.Plant;
 //import com.example.cln.Models.Tree;
 //
