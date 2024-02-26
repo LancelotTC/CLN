@@ -6,7 +6,7 @@ import android.widget.Toast;
 
 public class Shortcuts {
     public static void log(String message) {
-        Log.d("", message);
+        Log.d("placeholder-message", message);
     }
     public static void log(String tag, String message) {
         Log.d(tag, message);

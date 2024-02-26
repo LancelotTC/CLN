@@ -7,8 +7,9 @@ import com.example.cln.Models.Filter;
 import com.example.cln.Models.Model;
 import com.example.cln.Models.Plant;
 import com.example.cln.Models.Tree;
-import com.example.cln.Utils.TaskRunner;
+import com.example.cln.Remote.Request;
 import com.example.cln.Utils.Shortcuts;
+import com.example.cln.Utils.TaskRunner;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -26,6 +27,7 @@ public class RemoteAccess {
      * Static instance of class for Singleton design pattern
      */
     private static RemoteAccess instance;
+
 
     /**
      * {@link TaskRunner} instance used to asynchronously handle any tasks
@@ -66,19 +68,23 @@ public class RemoteAccess {
      * @param method Request method: GET, POST, PUT, DELETE supported by the server for now.
      */
     private void executeRequest(Map<String, String> map, String method) {
-//        taskRunner.executeAsync(new Request(map, method));
+        taskRunner.executeAsync(new Request(map, method));
     }
 
     /**
      * Requests all the entries of all the relevant tables in the database
      */
     public void getAll() {
-        executeRequest(Map.of("tables", "*"), "GET");
+        Map<String, String> map = new java.util.HashMap<>();
+        map.put("tables", "*");
+        executeRequest(map, "GET");
     }
 
     @Deprecated
     public void getOne(String id) {
-        executeRequest(Map.of("id", id), "GET");
+        Map<String, String> map = new java.util.HashMap<>();
+        map.put("id", id);
+        executeRequest(map, "GET");
     }
 
     /**
@@ -87,8 +93,11 @@ public class RemoteAccess {
      * @param model Model to be added
      */
     public void add(Model model) {
-        executeRequest(Map.of("tables", model.getTableName(),
-                "data", model.toJSONObject().toString()), "POST");
+        Shortcuts.log("JSONObject", model.toJSONObject().toString());
+        Map<String, String> map = new java.util.HashMap<>();
+        map.put("tables", model.getTableName());
+        map.put("data", model.toJSONObject().toString());
+        executeRequest(map, "POST");
     }
 
     /**
@@ -98,8 +107,11 @@ public class RemoteAccess {
      * @param model Model to be updated
      */
      public void update(Model model) {
-        executeRequest(Map.of("tables", model.getTableName(), "id", String.valueOf(model.getId()),
-                "data", model.toJSONObject().toString()), "PUT");
+         Map<String, String> map = new java.util.HashMap<>();
+         map.put("tables", model.getTableName());
+         map.put("id", String.valueOf(model.getId()));
+         map.put("data", model.toJSONObject().toString());
+         executeRequest(map, "PUT");
     }
 
     /**
@@ -109,7 +121,10 @@ public class RemoteAccess {
      * @param model Model to be deleted
      */
     public void delete(Model model) {
-        executeRequest(Map.of("tables", model.getTableName(), "id", String.valueOf(model.getId())), "DELETE");
+        Map<String, String> map = new java.util.HashMap<>();
+        map.put("tables", model.getTableName());
+        map.put("id", String.valueOf(model.getId()));
+        executeRequest(map, "DELETE");
     }
 
     /**
@@ -125,21 +140,39 @@ public class RemoteAccess {
         int code = response.getInt("code");
         String message = response.getString("message");
 
+        // INFO: Other status codes in the 200 range still mean that the request was successful,
+        // especially the 201 which by convention indicates that something was changed (POST).
         if (code != 200) {
             Shortcuts.toast(context, "Error " + code + ": " + message);
             Shortcuts.log("HTTP Error " + code, message);
             return;
         }
 
-        Shortcuts.log("response", response);
-
-        if (!response.getString("method").equals("GET")) {
-            return;
-        }
-
-        ArrayList<Model> models = new ArrayList<>();
         JSONObject results = new JSONObject(response.getString("result"));
-        Shortcuts.log("results", results);
+
+
+        switch (response.getString("method")) {
+            case "GET":
+                Shortcuts.log(results.toString());
+                getCallback(results);
+                break;
+            case "POST":
+                postCallback(results);
+                break;
+            case "PUT":
+                putCallback(results);
+                break;
+            case "DELETE":
+                deleteCallback(results);
+                break;
+        }
+    }
+
+
+    private void getCallback(JSONObject results) throws JSONException {
+        ArrayList<Model> models = new ArrayList<>();
+
+
 
 //        HashMap<String, Function<JSONObject, Model>> stringToClass = new HashMap<>();
 //
@@ -153,25 +186,40 @@ public class RemoteAccess {
         JSONArray filters = results.getJSONArray("filter");
         JSONArray composters = results.getJSONArray("composter");
 
-        Shortcuts.log("plants", plants);
-        Shortcuts.log("trees", trees);
-        Shortcuts.log("filters", filters);
-        Shortcuts.log("composters", composters);
+//        Shortcuts.log("plants", plants);
+//        Shortcuts.log("trees", trees);
+//        Shortcuts.log("filters", filters);
+//        Shortcuts.log("composters", composters);
 
 
         for (int i = 0; i < plants.length(); i++) {
             models.add(Plant.fromJSONObject(new JSONObject(plants.get(i).toString())));
         }
+
         for (int i = 0; i < trees.length(); i++) {
             models.add(Tree.fromJSONObject(new JSONObject(trees.get(i).toString())));
         }
+
         for (int i = 0; i < filters.length(); i++) {
             models.add(Filter.fromJSONObject(new JSONObject(filters.get(i).toString())));
         }
+
         for (int i = 0; i < composters.length(); i++) {
             models.add(Composter.fromJSONObject(new JSONObject(composters.get(i).toString())));
         }
 
         Controller.getInstance(context).populateMap(models.toArray(new Model[0]));
+    }
+
+    private void postCallback(JSONObject results) {
+        Controller.getInstance(context).addEntryCallback(Plant.fromJSONObject(results));
+    }
+
+    private void putCallback(JSONObject results) {
+
+    }
+
+    private void deleteCallback(JSONObject results) {
+
     }
 }

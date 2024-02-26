@@ -17,8 +17,9 @@ public class Plant extends AreaModel {
     private final Integer leafAmount;
     private final int resourceId;
 
-    public Plant(String label, ArrayList<LatLng> latLngs, int amount, Integer growthState, Integer leafAmount) {
+    public Plant(String label, ArrayList<LatLng> latLngs, int quantity, Integer growthState, Integer leafAmount) {
         super(label, latLngs, null, "plant");
+
         switch (growthState) {
             case 1:
                 resourceId = R.drawable.plant_ps_icon;
@@ -34,7 +35,8 @@ public class Plant extends AreaModel {
         }
 
         super.setResourceId(resourceId);
-        this.amount = amount;
+
+        this.amount = quantity;
         this.growthState = growthState;
         this.leafAmount = leafAmount;
     }
@@ -80,7 +82,7 @@ public class Plant extends AreaModel {
 
     public static Plant fromJSONObject(JSONObject jsonObject) {
         try {
-            JSONArray JSONpoints = jsonObject.getJSONArray("points");
+            JSONArray JSONpoints = new JSONArray(jsonObject.getString("points"));
             ArrayList<LatLng> points = new ArrayList<>();
 
             for (int i=0; i < JSONpoints.length(); i++) {
@@ -91,12 +93,12 @@ public class Plant extends AreaModel {
             Plant plant = new Plant(
                     jsonObject.getString("label"),
                     points,
-                    jsonObject.getInt("amount"),
-                    jsonObject.getInt("growth_state_id"),
-                    jsonObject.getInt("leaf_amount")
+                    Integer.parseInt(jsonObject.getString("leaf_amount")),
+                    Integer.parseInt(jsonObject.getString("growth_state_id")),
+                    Integer.parseInt(jsonObject.getString("leaf_amount"))
             );
 
-            plant.setId(jsonObject.getLong("plant_id"));
+            plant.setId(Long.parseLong(jsonObject.getString("plant_id")));
             return plant;
         } catch (JSONException e) {
             throw new RuntimeException(e);

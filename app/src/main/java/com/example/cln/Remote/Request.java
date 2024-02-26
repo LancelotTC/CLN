@@ -18,7 +18,7 @@ public class Request implements Callable<String> {
     private final String METHOD;
     private String response = "";
     private final StringBuilder requestParameters = new StringBuilder();
-    private final String requestUrl = "http://192.168.217.71/cln/clnserver.php";
+    private final String requestUrl = "http://10.0.2.2/cln/clnserver.php";
 
     public Request(Map<String, String> parameters, String METHOD) {
         super();
@@ -84,7 +84,6 @@ public class Request implements Callable<String> {
             }
         } catch (Exception e) {
             Shortcuts.log("Error in Request", e.toString());
-            e.printStackTrace();
         } finally {
 //            try {
 //                assert writer != null;

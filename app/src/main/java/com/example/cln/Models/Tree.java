@@ -17,11 +17,13 @@ public class Tree extends PointModel {
             Tree tree = new Tree(
                     // TODO: change the way location is accessed.
                     jsonObject.getString("label"),
-                    new LatLng(jsonObject.getDouble("latitude"),
-                            jsonObject.getDouble("longitude"))
+                    new LatLng(
+                            Double.parseDouble(jsonObject.getString("latitude")),
+                            Double.parseDouble(jsonObject.getString("longitude"))
+                    )
             );
 
-            tree.setId(jsonObject.getLong("fruit_tree_id"));
+            tree.setId(Long.parseLong(jsonObject.getString("fruit_tree_id")));
             return tree;
         } catch (JSONException e) {
             throw new RuntimeException(e);

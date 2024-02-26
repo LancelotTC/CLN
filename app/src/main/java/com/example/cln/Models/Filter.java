@@ -16,11 +16,13 @@ public class Filter extends PointModel {
             Filter filter = new Filter(
                     // TODO: change the way location is accessed.
                     jsonObject.getString("label"),
-                    new LatLng(jsonObject.getDouble("latitude"),
-                            jsonObject.getDouble("longitude"))
+                    new LatLng(
+                            Double.parseDouble(jsonObject.getString("latitude")),
+                            Double.parseDouble(jsonObject.getString("longitude"))
+                    )
             );
 
-            filter.setId(jsonObject.getLong("filter_id"));
+            filter.setId(Long.parseLong(jsonObject.getString("filter_id")));
 
             return filter;
         } catch (JSONException e) {

@@ -19,15 +19,14 @@ public class Composter extends PointModel {
             Composter composter = new Composter(
                     // TODO: change the way location is accessed.
                     jsonObject.getString("label"),
-                    new LatLng(jsonObject.getDouble("latitude"),
-                            jsonObject.getDouble("longitude"))
+                    new LatLng(Double.parseDouble(jsonObject.getString("latitude")),
+                            Double.parseDouble(jsonObject.getString("longitude")))
             );
 
-            composter.setId(jsonObject.getLong("composter_id"));
+            composter.setId(Long.parseLong(jsonObject.getString("composter_id")));
             return composter;
         } catch (JSONException e) {
             throw new RuntimeException(e);
         }
     }
-
 }

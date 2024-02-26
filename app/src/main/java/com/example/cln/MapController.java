@@ -7,6 +7,7 @@ import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Context;
 import android.content.pm.PackageManager;
+import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
@@ -17,12 +18,15 @@ import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Build;
 import android.util.Log;
+import android.util.TypedValue;
 
+import androidx.annotation.ColorInt;
 import androidx.annotation.NonNull;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
 import com.example.cln.Models.AreaModel;
+import com.example.cln.Models.Model;
 import com.example.cln.Models.PointModel;
 import com.example.cln.Utils.Shortcuts;
 import com.example.cln.Utils.Tools;
@@ -39,7 +43,6 @@ import com.google.android.gms.maps.model.Polygon;
 import com.google.android.gms.maps.model.PolygonOptions;
 import com.google.android.gms.tasks.Task;
 
-import java.util.List;
 import java.util.Objects;
 import java.util.function.Consumer;
 
@@ -91,6 +94,8 @@ public class MapController {
      */
     private final int MAX_ZOOM;
 
+    private boolean objectsClickable = true;
+
     {
         MAX_ZOOM = 21;
     }
@@ -134,7 +139,7 @@ public class MapController {
 
             @Override
             public void onMarkerDragEnd(@NonNull Marker marker) {
-                Controller.getInstance(context).updateModelLocation(marker);
+                Controller.getInstance(context).updatePointModelLocation(marker);
             }
 
             @Override
@@ -407,7 +412,7 @@ public class MapController {
 
     /**
      * Adds a marker to the map and returns it. Gets all the necessary info from the Model object
-     * @param model Any subtype of Model
+     * @param pointModel PointModel
      * @return Marker
      */
     public Marker addMarker(PointModel pointModel) {
@@ -431,13 +436,20 @@ public class MapController {
      * @return Polygon
      */
     public Polygon addPolygon(PolygonOptions polygonOptions) {
+        TypedValue typedValue = new TypedValue();
+        Resources.Theme theme = context.getTheme();
+        theme.resolveAttribute(com.google.android.material.R.attr.colorPrimary, typedValue, true);
+        @ColorInt int color = typedValue.data;
+
+        polygonOptions.fillColor(color);
+        polygonOptions.fillColor(color);
         return googleMap.addPolygon(polygonOptions);
     }
 
     public Polygon addPolygon(AreaModel areaModel) {
         PolygonOptions polygonOptions = new PolygonOptions();
         polygonOptions.addAll(areaModel.getLatLngs());
-        return googleMap.addPolygon(polygonOptions);
+        return addPolygon(polygonOptions);
     }
 
 
@@ -453,7 +465,7 @@ public class MapController {
      */
     public void setOnMarkerClickListener(Consumer<Marker> consumer) {
         googleMap.setOnMarkerClickListener(marker -> {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N && objectsClickable) {
                 consumer.accept(marker);
                 selectedMarker = marker;
             }
@@ -473,21 +485,30 @@ public class MapController {
             selectedMarker = null;
         });
         // TODO: reimplement this function
+    }
+
+    public void setOnPolygonClickListener(Consumer<Polygon> func) {
         googleMap.setOnPolygonClickListener(polygon -> {
-            Shortcuts.toast(context, polygon.getPoints());
-            List<LatLng> points = polygon.getPoints();
-            polygon.remove();
-            PolygonOptions polygonOptions = new PolygonOptions();
-            polygonOptions.clickable(true);
-
-
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-                points.forEach(point -> {
-                    polygonOptions.add(new LatLng(point.latitude + 1, point.longitude));
-                });
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N && objectsClickable) {
+                func.accept(polygon);
             }
 
-            addPolygon(polygonOptions);
+
+//            Shortcuts.toast(context, polygon.getPoints());
+//            ArrayList<LatLng> points = (ArrayList<LatLng>) polygon.getPoints();
+//            polygon.remove();
+
+//            PolygonOptions polygonOptions = new PolygonOptions();
+//            polygonOptions.clickable(true);
+//
+//
+//            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+//                points.forEach(point -> {
+//                    polygonOptions.add(new LatLng(point.latitude + 1, point.longitude));
+//                });
+//            }
+
+//            addPolygon(polygonOptions);
 
 //            points.forEach();
         });
@@ -519,8 +540,23 @@ public class MapController {
         polygonOptions.strokeWidth(10);
         googleMap.addPolygon(polygonOptions);
 
-        addMarker(new LatLng(14.65436187, -61.00710134),
-                "Maison", R.drawable.terrain_maison);
+//        addMarker(new LatLng(14.65436187, -61.00710134),
+//                "Maison", R.drawable.terrain_maison);
 
+    }
+
+    public void setObjectsClickable(boolean objectsClickable) {
+        this.objectsClickable = objectsClickable;
+    }
+
+    public void addObject(Model model) {
+        if (model instanceof PointModel) {
+            Marker marker = addMarker((PointModel) model);
+            marker.setTag(model);
+        }
+        else if (model instanceof AreaModel) {
+            Polygon polygon = addPolygon((AreaModel) model);
+            polygon.setTag(model);
+        }
     }
 }

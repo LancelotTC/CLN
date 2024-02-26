@@ -2,6 +2,7 @@ package com.example.cln.Models;
 
 import com.google.android.gms.maps.model.LatLng;
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -9,7 +10,7 @@ import java.util.ArrayList;
 
 public class AreaModel extends Model {
 
-    private int amount;
+    private int quantity;
 
     private ArrayList<LatLng> latLngs;
 
@@ -30,8 +31,15 @@ public class AreaModel extends Model {
         JSONObject jsonObject = super.toJSONObject();
 
         try {
-            jsonObject.put("amount", amount);
-            jsonObject.put("points", latLngs);
+            jsonObject.put("quantity", quantity);
+
+            ArrayList<Double[]> positions = new ArrayList<>();
+            for (LatLng latLng : latLngs) {
+                positions.add(new Double[] {latLng.latitude, latLng.longitude});
+            }
+
+            // db only accepts values as strings, not json arrays
+            jsonObject.put("points", new JSONArray(positions).toString());
         } catch (JSONException e) {
             throw new RuntimeException(e);
         }

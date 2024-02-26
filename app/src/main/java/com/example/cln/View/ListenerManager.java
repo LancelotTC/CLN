@@ -1,4 +1,4 @@
-//package com.example.cln;
+//package com.example.cln.View;
 //
 //import android.animation.Animator;
 //import android.animation.ObjectAnimator;
@@ -19,6 +19,7 @@
 //import com.example.cln.Models.Tree;
 //
 //public class ListenerManager {
+//    private static View[] allInflated;
 //
 //    public static void setListener(LinearLayout btnMain, int targetActivityId, Context context) {
 //
@@ -67,13 +68,16 @@
 //        });
 //    }
 //
-//    static private void setDialogDismissListener(Button btnCancel, Dialog dialog) {
-//        btnCancel.setOnClickListener(v -> dialog.dismiss());
-//    }
-//    static public void setPlantListener(int txtNameId, Integer growthState, Integer leafAmount,
-//    Button btnOk, Button btnCancel, int resourceId, Dialog dialog, Context context) {
-//        setDialogDismissListener(btnCancel, dialog);
-//
+//    static public void applyPlantListener(
+//            int txtNameId,
+//            Integer growthState,
+//            Integer leafAmount,
+//            Button btnOk,
+//            Button btnCancel,
+//            int resourceId,
+//            Dialog dialog,
+//            Context context
+//    ) {
 //        btnOk.setOnClickListener(v -> {
 //            MapController mapController = MapController.getInstance(context);
 //            String label = R.id.txtPlantName.getText().toString();
@@ -86,7 +90,7 @@
 //
 //    }
 //
-//    static public void setTreeListener(LinearLayout btnMain, String label, Button btnOk, Button btnCancel,
+//    static public void applyTreeListener(LinearLayout btnMain, String label, Button btnOk, Button btnCancel,
 //    int resourceId, int targetActivityId, Context context) {
 //        setListener(btnMain, label, btnOk, btnCancel,
 //                resourceId, targetActivityId, context);
@@ -98,7 +102,7 @@
 //        });
 //    }
 //
-//    public static void setFilterListener(LinearLayout btnMain, String label, Button btnOk,
+//    public static void applyFilterListener(LinearLayout btnMain, String label, Button btnOk,
 //    Button btnCancel, int resourceId, int targetActivityId, Context context) {
 //        setListener(btnMain, label, btnOk, btnCancel,
 //                resourceId, targetActivityId, context);
@@ -109,7 +113,7 @@
 //            // More
 //        });
 //    }
-//    static public void setComposterListener(LinearLayout btnMain, String label, Button btnOk,
+//    static public void applyComposterListener(LinearLayout btnMain, String label, Button btnOk,
 //    Button btnCancel, int resourceId, int targetActivityId, Context context) {
 //        setListener(btnMain, label, btnOk, btnCancel,
 //                resourceId, targetActivityId, context);
@@ -120,4 +124,15 @@
 //            // more
 //        });
 //    }
+//
+//    /**
+//     * Makes all inflated views invisible and makes the passed in inflated View visible.
+//     * @param inflated
+//     */
+//    private void toggleVisibility(View inflated) {
+//        for (View view : allInflated) {view.setVisibility(View.GONE);}
+//        inflated.setVisibility(View.VISIBLE);
+//    }
+//
+//
 //}

@@ -13,8 +13,8 @@ import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.Polygon;
 
 import java.io.IOException;
-import java.util.HashMap;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * General controller for the entire application. Tasks that require multiple fronts to be acted upon
@@ -43,9 +43,11 @@ public class Controller {
      */
     private final RemoteAccess remoteAccess;
 
+//    private final HashMap<Long, PointModel> pointToMarker;
+//    private final HashMap<Long, AreaModel> areaToMarker;
 
-    private final HashMap<Long, PointModel> pointToMarker;
-    private final HashMap<Long, AreaModel> areaToMarker;
+
+
     /**
      * Private class constructor. Get instance with {#getInstance}
      * @param context Required to instanciate all other subcontrollers
@@ -54,8 +56,8 @@ public class Controller {
         mapController = MapController.getInstance(context);
 //        localAccess = LocalAccess.getInstance(context);
         remoteAccess = RemoteAccess.getInstance(context);
-        pointToMarker = new HashMap<>();
-        areaToMarker = new HashMap<>();
+//        pointToMarker = new HashMap<>();
+//        areaToMarker = new HashMap<>();
     }
 
     /**
@@ -71,22 +73,19 @@ public class Controller {
         return instance;
     }
 
+
     /**
      * Adds a marker to the map as well as an entry in the database.
      * @param model Any child instance of Model
      */
     public void addEntry(Model model) {
-        if (model instanceof PointModel) {
-            Marker marker = mapController.addMarker((PointModel) model);
-            marker.setTag(model.getId());
-            pointToMarker.put((Long) marker.getTag(), (PointModel) model);
-        }
-        else if (model instanceof AreaModel) {
-            Polygon polygon = mapController.addPolygon((AreaModel) model);
-            polygon.setTag(model.getId());
+        // TODO: directly send JSON to remoteAccess and only create object in callback instead of
+        // TODO: creating object twice.
+        remoteAccess.add(model);
+    }
 
-            areaToMarker.put((Long) polygon.getTag(), (AreaModel) model);
-        }
+    public void addEntryCallback(Model model) {
+        mapController.addObject(model);
     }
 
     /**
@@ -94,7 +93,6 @@ public class Controller {
      */
     public void retrieveEntries() {
         remoteAccess.getAll();
-//        populateMap(localAccess.retrieveEntries());
     }
 
     /**
@@ -103,20 +101,21 @@ public class Controller {
      */
     public void populateMap(Model[] models) {
         for (Model model : models) {
-            addEntry(model);
-            // localAccess.addModel((Long) marker.getTag(), model);
+            mapController.addObject(model);
         }
-
-//        ((Activity)context).findViewById(R.id.loadingBar).setVisibility(View.GONE);
-
     }
 
     /**
-     * Updates the model location associated with the marker in the database.
+     * Updates the PointModel location associated with the marker in the database.
      * @param marker Marker associated with a Model
      */
-    public void updateModelLocation(Marker marker) {
-        PointModel pointModel = getPointModel(marker);
+    public void updatePointModelLocation(Marker marker) {
+        if (marker.getTag() == null) {
+            Shortcuts.log("Skipped update",
+                    "Skipped updating location of marker because its tag was null");
+            return;
+        }
+        PointModel pointModel = (PointModel) marker.getTag();
         pointModel.setLatLng(marker.getPosition());
         remoteAccess.update(pointModel);
     }
@@ -126,14 +125,15 @@ public class Controller {
      * @param marker Marker associated with a Model
      * @return Model
      */
-    private PointModel getPointModel(Marker marker) {
-//        return localAccess.getModel(id);
-        return pointToMarker.get((Long) marker.getTag());
-    }
+//    public PointModel getPointModel(Marker marker) {
+////        return localAccess.getModel(id);
+//        return pointToMarker.get((Long) marker.getTag());
+//    }
+//
+//    public AreaModel getAreaModel(Polygon polygon) {
+//        return areaToMarker.get((Long) polygon.getTag());
+//    }
 
-    private AreaModel getAreaModel(Polygon polygon) {
-        return areaToMarker.get((Long) polygon.getTag());
-    }
 
     /**
      * Updates the Model's label and whether the Marker should be draggable.
@@ -144,13 +144,13 @@ public class Controller {
      */
     public void updateEntry(Marker marker, String label, boolean draggable) {
         mapController.updateMarker(marker, label, draggable);
-        Model model = getPointModel(marker);
+        Model model = (Model) marker.getTag();
         model.setLabel(label);
         remoteAccess.update(model);
     }
 
-    public void updatePolygon(Polygon polygon, String label) {
-        AreaModel areaModel = getAreaModel(polygon);
+    public void updateEntry(Polygon polygon, String label) {
+        AreaModel areaModel = (AreaModel) polygon.getTag();
         areaModel.setLabel(label);
         remoteAccess.update(areaModel);
     }
@@ -161,9 +161,14 @@ public class Controller {
      */
     public void deleteEntry(Marker selectedMarker) {
 //        localAccess.deleteEntry(selectedMarker);
-        remoteAccess.delete(getPointModel(selectedMarker));
-        pointToMarker.remove((Long) selectedMarker.getTag());
+        remoteAccess.delete((Model) Objects.requireNonNull(selectedMarker.getTag()));
         selectedMarker.remove();
+    }
+
+    public void deleteEntry(Polygon polygon) {
+//        localAccess.deleteEntry(selectedMarker);
+        remoteAccess.delete((Model) Objects.requireNonNull(polygon.getTag()));
+        polygon.remove();
     }
 
     /**
