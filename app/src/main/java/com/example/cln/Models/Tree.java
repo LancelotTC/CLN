@@ -15,6 +15,10 @@ public class Tree extends PointModel {
         super(label, latLng, R.drawable.tree_icon, "tree");
     }
 
+    /**
+     * Returns the Model based on the JSON object
+     * @return Returns the instance of the Model
+     */
     public static Tree fromJSONObject(JSONObject jsonObject) {
         try {
             Tree tree = new Tree(

@@ -62,6 +62,10 @@ public class Placer {
         polyline = mapController.addPolyline(new PolylineOptions().addAll(getLatLngs()));
     }
 
+    /**
+     * Returns the latLngs from the points
+     * @return latLngs from the points
+     */
     public ArrayList<LatLng> getLatLngs() {
         ArrayList<LatLng> latLngs = new ArrayList<>();
 

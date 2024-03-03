@@ -23,7 +23,6 @@ import java.util.Objects;
  * done with it.
  */
 public class Controller {
-
     /**
      * Static instance of class for Singleton design pattern
      */
@@ -134,6 +133,11 @@ public class Controller {
         remoteAccess.update(model);
     }
 
+    /**
+     * Updates the Model's label
+     * @param polygon The polygon which label should be modified
+     * @param label The label
+     */
     public void updateEntry(Polygon polygon, String label) {
         MultiPointModel multiPointModel = (MultiPointModel) polygon.getTag();
         assert multiPointModel != null;
@@ -141,6 +145,11 @@ public class Controller {
         remoteAccess.update(multiPointModel);
     }
 
+    /**
+     * Updates the Model's label
+     * @param polyline The polyline which label should be modified
+     * @param label The label
+     */
     public void updateEntry(Polyline polyline, String label) {
         MultiPointModel multiPointModel = (MultiPointModel) polyline.getTag();
         assert multiPointModel != null;

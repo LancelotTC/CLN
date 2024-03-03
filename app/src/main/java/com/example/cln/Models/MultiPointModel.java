@@ -29,6 +29,7 @@ public class MultiPointModel extends Model {
         this.latLngs = latLngs;
     }
 
+    @Override
     public JSONObject toJSONObject() {
         JSONObject jsonObject = super.toJSONObject();
 

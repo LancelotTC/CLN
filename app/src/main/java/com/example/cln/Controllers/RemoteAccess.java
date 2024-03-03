@@ -81,13 +81,6 @@ public class RemoteAccess {
         executeRequest(map, "GET");
     }
 
-    @Deprecated
-    public void getOne(String id) {
-        Map<String, String> map = new java.util.HashMap<>();
-        map.put("id", id);
-        executeRequest(map, "GET");
-    }
-
     /**
      * Requests the insertion of a singular Model. Corresponding table with be inferred
      * from the getTableName method present in all child classes of Model.
@@ -192,6 +185,11 @@ public class RemoteAccess {
     }
 
 
+    /**
+     * Whenever a GET response has been received this function will be called
+     * @param results the results of the response
+     * @throws JSONException if the results are not in a valid JSON state
+     */
     private void getCallback(JSONObject results) throws JSONException {
         ArrayList<Model> models = new ArrayList<>();
 
@@ -236,6 +234,11 @@ public class RemoteAccess {
         Controller.getInstance(context).populateMap(models.toArray(new Model[0]));
     }
 
+    /**
+     * Whenever a POST response has been received this function will be called
+     * @param results the results of the response
+     * @throws JSONException if the results are not in a valid JSON state
+     */
     private void postCallback(JSONObject results) throws JSONException {
         Model model;
         switch (results.getString("model")) {
@@ -260,11 +263,21 @@ public class RemoteAccess {
         Controller.getInstance(context).addEntryCallback(model);
     }
 
-    private void putCallback(JSONObject results) {
+    /**
+     * Whenever a PUT response has been received this function will be called
+     * @param results the results of the response
+     * @throws JSONException if the results are not in a valid JSON state
+    */
+    private void putCallback(JSONObject results) throws JSONException {
 
     }
 
-    private void deleteCallback(JSONObject results) {
+    /**
+     * Whenever a DELETE response has been received this function will be called
+     * @param results the results of the response
+     * @throws JSONException if the results are not in a valid JSON state
+     */
+    private void deleteCallback(JSONObject results) throws JSONException {
 
     }
 }

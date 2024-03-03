@@ -25,6 +25,7 @@ public class PointModel extends Model {
         this.latLng = latLng;
     }
 
+    @Override
     public JSONObject toJSONObject() {
         JSONObject jsonObject = super.toJSONObject();
 
@@ -37,6 +38,4 @@ public class PointModel extends Model {
 
         return jsonObject;
     }
-
-
 }

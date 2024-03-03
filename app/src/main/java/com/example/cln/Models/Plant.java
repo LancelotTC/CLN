@@ -18,11 +18,12 @@ public class Plant extends MultiPointModel implements IArea {
     private Integer quantity;
     private final Integer growthState;
     private final Integer leafAmount;
-    private final int resourceId;
 
-    public Plant(String label, ArrayList<LatLng> latLngs, int quantity, Integer growthState, Integer leafAmount) {
+    public Plant(String label, ArrayList<LatLng> latLngs, int quantity, Integer growthState,
+                 Integer leafAmount) {
         super(label, latLngs, null, "plant");
 
+        final int resourceId;
         switch (growthState) {
             case 1:
                 resourceId = R.drawable.plant_ps_icon;
@@ -71,6 +72,7 @@ public class Plant extends MultiPointModel implements IArea {
         return contentValues;
     }
 
+    @Override
     public JSONObject toJSONObject() {
         JSONObject jsonObject = super.toJSONObject();
 
@@ -85,6 +87,10 @@ public class Plant extends MultiPointModel implements IArea {
         return jsonObject;
     }
 
+    /**
+     * Returns the Model based on the JSON object
+     * @return Returns the instance of the Model
+     */
     public static Plant fromJSONObject(JSONObject jsonObject) {
         try {
             JSONArray JSONpoints = new JSONArray(jsonObject.getString("points"));

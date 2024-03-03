@@ -17,6 +17,10 @@ public class Filter extends MultiPointModel implements ILine {
         super(label, latLngs, R.drawable.filter_icon, "filter");
     }
 
+    /**
+     * Returns the Model based on the JSON object
+     * @return Returns the instance of the Model
+     */
     public static Filter fromJSONObject(JSONObject jsonObject) {
         try {
             JSONArray JSONpoints = new JSONArray(jsonObject.getString("points"));
@@ -38,6 +42,4 @@ public class Filter extends MultiPointModel implements ILine {
             throw new RuntimeException(e);
         }
     }
-
-
 }

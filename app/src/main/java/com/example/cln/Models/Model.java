@@ -52,8 +52,8 @@ public abstract class Model {
     }
 
     /**
-     * Creates a JSONobject representation of the Model.
-     * @return JSONObject
+     * Returns the JSON representation of the model
+     * @return JSON representation of the model
      */
     public JSONObject toJSONObject() {
         JSONObject jsonObject = new JSONObject();

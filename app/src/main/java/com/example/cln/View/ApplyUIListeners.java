@@ -83,7 +83,7 @@ public class ApplyUIListeners implements androidx.core.view.OnApplyWindowInsetsL
      * Window instance used to get the window insets and get the corner radius of the device to
      * adapt the UI.
      */
-    private Window window;
+    private final Window window;
 
     /**
      * Used to open or close the soft keyboard view.
@@ -260,7 +260,12 @@ public class ApplyUIListeners implements androidx.core.view.OnApplyWindowInsetsL
         inputMethodManager.hideSoftInputFromWindow(editText.getWindowToken(), 0);
     }
 
-
+    /**
+     * Start scale and translate animation of the navView
+     * @param newY navView's new Y (translation)
+     * @param from Old height
+     * @param to New height
+     */
     private void startScaleTranslateAnimation(int newY, int from, int to) {
         ObjectAnimator translateAnimator = ObjectAnimator.ofFloat(navView, "translationY",
                 newY);
@@ -374,6 +379,10 @@ public class ApplyUIListeners implements androidx.core.view.OnApplyWindowInsetsL
 //        navView.startScaleTranslateAnimation(resizeAnimation);
     }
 
+    /**
+     * Switches the navView state
+     * @param newNavState 0 = folded, 1 = expanded, 2 = changed
+     */
     private void switchNavView(int newNavState) {
         if (navState == newNavState) {
             return;
@@ -436,6 +445,10 @@ public class ApplyUIListeners implements androidx.core.view.OnApplyWindowInsetsL
         inflated.setVisibility(View.VISIBLE);
     }
 
+    /**
+     * Sets the view visible while all others are gone.
+     * @param view view to show
+     */
     private void toggleNavViewsVisibility(View view) {
         for (View v : allNavViews) {v.setVisibility(View.GONE);}
         view.setVisibility(View.VISIBLE);
@@ -443,6 +456,9 @@ public class ApplyUIListeners implements androidx.core.view.OnApplyWindowInsetsL
     }
 
 
+    /**
+     * Convenience function which applies all listeners
+     */
     public void applyAllListeners() {
         foldedHeight = navView.getHeight();
         expandedHeight = foldedHeight * 3;
@@ -456,6 +472,9 @@ public class ApplyUIListeners implements androidx.core.view.OnApplyWindowInsetsL
         applyImgBtnCurrentLocationListener();
     }
 
+    /**
+     * Applies the plant related UI listeners
+     */
     public void applyPlantListener() {
         findViewById(R.id.btnPlant).setOnClickListener(v -> {
             // Show the place area UI
@@ -544,6 +563,9 @@ public class ApplyUIListeners implements androidx.core.view.OnApplyWindowInsetsL
         });
     }
 
+    /**
+     * Applies the tree related UI listeners
+     */
     public void applyTreeListener() {
         findViewById(R.id.btnTree).setOnClickListener(v -> {
 
@@ -576,6 +598,9 @@ public class ApplyUIListeners implements androidx.core.view.OnApplyWindowInsetsL
         });
     }
 
+    /**
+     * Applies the filter related UI listeners
+     */
     public void applyFilterListener() {
         findViewById(R.id.btnFilter).setOnClickListener(v -> {
             // Show the place area UI
@@ -650,6 +675,9 @@ public class ApplyUIListeners implements androidx.core.view.OnApplyWindowInsetsL
 
     }
 
+    /**
+     * Applies the composter related UI listeners
+     */
     public void applyComposterListener() {
         findViewById(R.id.btnComposter).setOnClickListener(v -> {
             switchNavView(NAV_EXPANDED);
@@ -678,12 +706,18 @@ public class ApplyUIListeners implements androidx.core.view.OnApplyWindowInsetsL
 
     }
 
+    /**
+     * Applies the "current location" button listener
+     */
     public void applyImgBtnCurrentLocationListener() {
         findViewById(R.id.imgBtnCurrentLocation).setOnClickListener(v -> {
             mapController.requestCurrentLocation();
         });
     }
 
+    /**
+     * Applies the txtSearch listener
+     */
     public void applyTxtSearchListener() {
         ((EditText)findViewById(R.id.txtSearch)).setOnEditorActionListener((v, actionId, event) -> {
             if (actionId == EditorInfo.IME_ACTION_DONE) {
@@ -692,9 +726,11 @@ public class ApplyUIListeners implements androidx.core.view.OnApplyWindowInsetsL
             }
             return false;
         });
-
     }
 
+    /**
+     * Applies map related listeners
+     */
     public void applyMapListener() {
         mapController.setOnMarkerClickListener(m -> {
 
@@ -867,6 +903,9 @@ public class ApplyUIListeners implements androidx.core.view.OnApplyWindowInsetsL
 
     }
 
+    /**
+     * Applies the onBackPressed listener
+     */
     public void onBackPressed() {
         switch (navState) {
             case NAV_FOLDED: {
@@ -955,7 +994,5 @@ public class ApplyUIListeners implements androidx.core.view.OnApplyWindowInsetsL
 
         return insets;
     }
-
-
 }
 

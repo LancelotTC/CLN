@@ -14,6 +14,10 @@ public class Composter extends PointModel {
         super(label, latLng, R.drawable.terrain_icon, "composter");
     }
 
+    /**
+     * Returns the Model based on the JSON object
+     * @return Returns the instance of the Model
+     */
     public static Composter fromJSONObject(JSONObject jsonObject) {
         try {
             Composter composter = new Composter(
