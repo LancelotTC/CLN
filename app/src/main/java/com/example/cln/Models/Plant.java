@@ -11,8 +11,11 @@ import org.json.JSONObject;
 
 import java.util.ArrayList;
 
-public class Plant extends AreaModel {
-    private Integer amount;
+/**
+ * Plant model
+ */
+public class Plant extends MultiPointModel implements IArea {
+    private Integer quantity;
     private final Integer growthState;
     private final Integer leafAmount;
     private final int resourceId;
@@ -36,17 +39,18 @@ public class Plant extends AreaModel {
 
         super.setResourceId(resourceId);
 
-        this.amount = quantity;
+        this.quantity = quantity;
         this.growthState = growthState;
         this.leafAmount = leafAmount;
     }
 
-    public Integer getAmount() {
-        return amount;
+
+    public Integer getQuantity() {
+        return quantity;
     }
 
-    public void setAmount(Integer amount) {
-        this.amount = amount;
+    public void setQuantity(Integer quantity) {
+        this.quantity = quantity;
     }
 
     public Integer getGrowthState() {
@@ -71,6 +75,7 @@ public class Plant extends AreaModel {
         JSONObject jsonObject = super.toJSONObject();
 
         try {
+            jsonObject.put("quantity", quantity);
             jsonObject.put("growth_state_id", growthState);
             jsonObject.put("leaf_amount", leafAmount);
         } catch (JSONException e) {

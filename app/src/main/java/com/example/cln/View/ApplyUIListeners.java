@@ -3,13 +3,20 @@ package com.example.cln.View;
 import android.animation.AnimatorSet;
 import android.animation.ObjectAnimator;
 import android.animation.ValueAnimator;
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
+import android.content.res.ColorStateList;
+import android.content.res.Resources;
+import android.util.TypedValue;
+import android.view.DisplayCutout;
+import android.view.RoundedCorner;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewStub;
 import android.view.Window;
+import android.view.WindowInsets;
 import android.view.animation.AccelerateInterpolator;
 import android.view.animation.AlphaAnimation;
 import android.view.animation.Animation;
@@ -23,29 +30,47 @@ import android.widget.LinearLayout;
 import android.widget.Spinner;
 import android.widget.Switch;
 import android.widget.TextView;
+import android.widget.Toast;
 
+import androidx.annotation.ColorInt;
 import androidx.annotation.IdRes;
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
 
-import com.example.cln.Controller;
-import com.example.cln.MapController;
+import com.example.cln.Controllers.Controller;
+import com.example.cln.Controllers.MapController;
 import com.example.cln.Models.Composter;
 import com.example.cln.Models.Filter;
 import com.example.cln.Models.Model;
 import com.example.cln.Models.Plant;
 import com.example.cln.Models.Tree;
-import com.example.cln.Placer;
 import com.example.cln.R;
-import com.example.cln.Utils.Shortcuts;
-import com.example.cln.Utils.Tools;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Marker;
+import com.google.android.gms.maps.model.Polygon;
+import com.google.android.gms.maps.model.Polyline;
+import com.google.android.material.shape.CornerFamily;
+import com.google.android.material.shape.MaterialShapeDrawable;
+import com.google.android.material.shape.ShapeAppearanceModel;
 
 import java.util.ArrayList;
 import java.util.Objects;
 
-public class ApplyUIListeners {
+/**
+ * Applies all widget listeners.
+ * Class exists to avoid clutter in {@link MainActivity}.
+ */
+public class ApplyUIListeners implements androidx.core.view.OnApplyWindowInsetsListener {
+    /**
+     * Context
+     */
     private final Context context;
 
+    /**
+     * Controller instance
+     */
     private final Controller controller;
 
     /**
@@ -145,10 +170,18 @@ public class ApplyUIListeners {
      */
     private final View[] allInflated;
 
+    /**
+     * Array that stores all navViews.
+     */
     private final View[] allNavViews;
 
     public ApplyUIListeners(Context context) {
         this.context = context;
+
+        window = ((Activity) context).getWindow();
+
+        ViewCompat.setOnApplyWindowInsetsListener(window.getDecorView(), this);
+
 
         controller = Controller.getInstance(context);
         mapController = MapController.getInstance(context);
@@ -196,6 +229,16 @@ public class ApplyUIListeners {
         return ((AppCompatActivity) context).findViewById(id);
     }
 
+
+    /**
+     * Sets the text of all EditText objects given to "" (empty)
+     * @param editTexts EditText widgets
+     */
+    public void setTextEmpty(EditText... editTexts) {
+        for (EditText editText : editTexts) {
+            editText.setText("");
+        }
+    }
 
     /**
      * Shows the soft keyboard and gives the focus to the EditText widget that is visible.
@@ -416,27 +459,24 @@ public class ApplyUIListeners {
     public void applyPlantListener() {
         findViewById(R.id.btnPlant).setOnClickListener(v -> {
             // Show the place area UI
-//            foldedNavView.setVisibility(View.GONE);
-//            inflatedArea.setVisibility(View.VISIBLE);
             switchNavView(NAV_CHANGED);
             placer = new Placer(context);
-
-            // Every time the map is clicked a marker needs to be added to the placer and map.
-
 
             // Converts the markers to a polygon, deletes the markers and opens the information UI.
             inflatedArea.findViewById(R.id.btnPlaceArea).setOnClickListener(v1 -> {
                 ArrayList<LatLng> points = placer.getLatLngs();
 
                 if (points.size() < 3) {
-                    Shortcuts.toast(context, "Mettez 3 points ou plus de façon à faire une aire.");
+                    Toast.makeText(context, "Mettez 3 points ou plus de façon à faire une aire.",
+                            Toast.LENGTH_SHORT).show();
                     return;
                 }
 
                 placer.createPolygon();
+//                placer.placeFlagMarker();
 
                 mapController.setOnMapClickListener((latLng) -> {
-                    switchNavView(NAV_FOLDED);;
+                    switchNavView(NAV_FOLDED);
                     placer.cancel();
                 });
 
@@ -448,10 +488,10 @@ public class ApplyUIListeners {
                 toggleExpandedViewsVisibility(inflatedPlant);
 
 
-                EditText txtPlantName = ((EditText) inflatedPlant.findViewById(R.id.txtPlantName));
+                EditText txtPlantName = inflatedPlant.findViewById(R.id.txtPlantName);
                 requestFocus(txtPlantName);
 
-                EditText txtNbFeuilles = ((EditText) findViewById(R.id.txtNbFeuilles));
+                EditText txtNbFeuilles = findViewById(R.id.txtNbFeuilles);
 
                 toggleExpandedViewsVisibility(inflatedPlant);
                 Spinner spinner = inflatedPlant.findViewById(R.id.spinnerGrowthState);
@@ -461,7 +501,6 @@ public class ApplyUIListeners {
                 inflatedPlant.findViewById(R.id.btnOkPlant).setOnClickListener(view -> {
 
                     try {
-
                         placer.removeMarkers();
                         String label = txtPlantName.getText().toString();
 
@@ -490,14 +529,14 @@ public class ApplyUIListeners {
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
-                    Tools.setTextEmpty(txtPlantName, txtNbFeuilles);
+                    setTextEmpty(txtPlantName, txtNbFeuilles);
                 });
 
                 inflatedPlant.findViewById(R.id.btnCancelPlant).setOnClickListener(v2 -> {
-                    placer.removePolygon();
+                    placer.removeShape();
                     switchNavView(NAV_CHANGED);
 
-                    Tools.setTextEmpty(txtPlantName, txtNbFeuilles);
+                    setTextEmpty(txtPlantName, txtNbFeuilles);
 
                     clearFocus(txtPlantName);
                 });
@@ -510,7 +549,7 @@ public class ApplyUIListeners {
 
             switchNavView(NAV_EXPANDED);
             toggleExpandedViewsVisibility(inflatedTree);
-            EditText txtTreeName = ((EditText) inflatedTree.findViewById(R.id.txtTreeName));
+            EditText txtTreeName = inflatedTree.findViewById(R.id.txtTreeName);
             requestFocus(txtTreeName);
 
 //            InputMethodManager imm = (InputMethodManager)getSystemService(Context.INPUT_METHOD_SERVICE);
@@ -526,12 +565,12 @@ public class ApplyUIListeners {
 
                 controller.addEntry(tree);
 
-                switchNavView(NAV_FOLDED);;
+                switchNavView(NAV_FOLDED);
                 clearFocus(txtTreeName);
             });
 
             inflatedTree.findViewById(R.id.btnCancelTree).setOnClickListener(v1 -> {
-                switchNavView(NAV_FOLDED);;
+                switchNavView(NAV_FOLDED);
                 clearFocus(txtTreeName);
             });
         });
@@ -539,29 +578,73 @@ public class ApplyUIListeners {
 
     public void applyFilterListener() {
         findViewById(R.id.btnFilter).setOnClickListener(v -> {
-            inflatedFilter.setVisibility(View.GONE);
+            // Show the place area UI
+            switchNavView(NAV_CHANGED);
+            placer = new Placer(context);
 
-            switchNavView(NAV_EXPANDED);
-            
-            toggleExpandedViewsVisibility(inflatedFilter);
-            EditText txtFilterName = ((EditText) inflatedFilter.findViewById(R.id.txtFilterName));
-            requestFocus(txtFilterName);
+            // Converts the markers to a polygon, deletes the markers and opens the information UI.
+            inflatedArea.findViewById(R.id.btnPlaceArea).setOnClickListener(v1 -> {
+                ArrayList<LatLng> points = placer.getLatLngs();
 
-            inflatedFilter.findViewById(R.id.btnOkFilter).setOnClickListener(view -> {
-                MapController mapController = MapController.getInstance(context);
-                String label = txtFilterName.getText().toString();
+                if (points.size() < 2) {
+                    Toast.makeText(context, "Mettez 2 points ou plus de façon à faire une ligne.", Toast.LENGTH_SHORT).show();
+                    return;
+                }
 
-                Filter filter = new Filter(label, mapController.getCurrentScreenLocation());
+                placer.createPolyline();
 
-                controller.addEntry(filter);
+                mapController.setOnMapClickListener((latLng) -> {
+                    switchNavView(NAV_FOLDED);
+                    placer.cancel();
+                });
 
-                switchNavView(NAV_FOLDED);;
-                clearFocus(txtFilterName);
-            });
 
-            inflatedFilter.findViewById(R.id.btnCancelFilter).setOnClickListener(v1 -> {
-                switchNavView(NAV_FOLDED);;
-                clearFocus(txtFilterName);
+//                foldedNavView.setVisibility(View.VISIBLE);
+//                inflatedArea.setVisibility(View.GONE);
+//                expandNavView();
+                switchNavView(NAV_EXPANDED);
+                toggleExpandedViewsVisibility(inflatedFilter);
+
+
+                EditText txtFilterName = inflatedFilter.findViewById(R.id.txtFilterName);
+                requestFocus(txtFilterName);
+
+                EditText txtNbFeuilles = findViewById(R.id.txtNbFeuilles);
+
+                toggleExpandedViewsVisibility(inflatedFilter);
+
+
+                inflatedFilter.findViewById(R.id.btnOkFilter).setOnClickListener(view -> {
+
+                    try {
+                        placer.removeMarkers();
+                        String label = txtFilterName.getText().toString();
+
+                        Filter filter = new Filter(
+                                label,
+                                points
+                        );
+
+
+                        controller.addEntry(filter);
+
+//                        switchNavView(NAV_FOLDED);;
+                        switchNavView(NAV_FOLDED);
+                        clearFocus(txtFilterName);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                    setTextEmpty(txtFilterName, txtNbFeuilles);
+                });
+
+                inflatedFilter.findViewById(R.id.btnCancelFilter).setOnClickListener(v2 -> {
+                    placer.removeShape();
+                    switchNavView(NAV_CHANGED);
+
+                    setTextEmpty(txtFilterName, txtNbFeuilles);
+
+                    clearFocus(txtFilterName);
+                });
             });
         });
 
@@ -571,7 +654,7 @@ public class ApplyUIListeners {
         findViewById(R.id.btnComposter).setOnClickListener(v -> {
             switchNavView(NAV_EXPANDED);
             toggleExpandedViewsVisibility(inflatedComposter);
-            EditText txtComposterName = ((EditText) inflatedComposter.findViewById(R.id.txtComposterName));
+            EditText txtComposterName = inflatedComposter.findViewById(R.id.txtComposterName);
             requestFocus(txtComposterName);
 
             inflatedComposter.findViewById(R.id.btnOkComposter).setOnClickListener(view -> {
@@ -583,12 +666,12 @@ public class ApplyUIListeners {
 
                 controller.addEntry(composter);
 
-                switchNavView(NAV_FOLDED);;
+                switchNavView(NAV_FOLDED);
                 clearFocus(txtComposterName);
             });
 
             inflatedComposter.findViewById(R.id.btnCancelComposter).setOnClickListener(v1 -> {
-                switchNavView(NAV_FOLDED);;
+                switchNavView(NAV_FOLDED);
                 clearFocus(txtComposterName);
             });
         });
@@ -619,32 +702,34 @@ public class ApplyUIListeners {
             switchNavView(NAV_EXPANDED);
             
             ((TextView)inflatedInfo.findViewById(R.id.txtInfoLabel)).setText(
-                    (CharSequence) (Objects.requireNonNull(m.getTitle()).isEmpty() ? "Sans nom" : m.getTitle())
+                    Objects.requireNonNull(m.getTitle()).isEmpty() ? "Sans nom" : m.getTitle()
             );
 
-            EditText txtInfoName = ((EditText) inflatedInfo.findViewById(R.id.txtInfoName));
+            EditText txtInfoName = inflatedInfo.findViewById(R.id.txtInfoName);
             txtInfoName.setText(
-                    (CharSequence) (Objects.requireNonNull(m.getTitle()).isEmpty() ? "Sans nom" : m.getTitle())
+                    Objects.requireNonNull(m.getTitle()).isEmpty() ? "Sans nom" : m.getTitle()
             );
             requestFocus(txtInfoName);
 
+            @SuppressLint("UseSwitchCompatOrMaterialCode") Switch switchInfoDraggable = inflatedInfo.findViewById(R.id.switchInfoDraggable);
 
-            ((Switch) inflatedInfo.findViewById(R.id.switchInfoDraggable)).setChecked(
+
+            switchInfoDraggable.setChecked(
                     !m.isDraggable()
             );
 
             inflatedInfo.findViewById(R.id.btnInfoUpdate).setOnClickListener(v -> {
                 String label = txtInfoName.getText().toString();
 
-                boolean draggable = !((Switch)inflatedInfo.findViewById(R.id.switchInfoDraggable)).isChecked();
+                boolean draggable = !switchInfoDraggable.isChecked();
 
-                controller.updateEntry(mapController.getSelectedMarker(), label, draggable);
-                switchNavView(NAV_FOLDED);;
+                controller.updateEntry((Marker) mapController.getSelectedObject(), label, draggable);
+                switchNavView(NAV_FOLDED);
                 clearFocus(inflatedInfo.findViewById(R.id.txtInfoName));
             });
 
             inflatedInfo.findViewById(R.id.btnInfoCancel).setOnClickListener(v1 -> {
-                switchNavView(NAV_FOLDED);;
+                switchNavView(NAV_FOLDED);
                 clearFocus(inflatedInfo.findViewById(R.id.txtInfoName));
             });
 
@@ -654,9 +739,9 @@ public class ApplyUIListeners {
                         builder.setTitle("Confirmer");
                         builder.setMessage("Etes-vous sûr ?");
                         builder.setPositiveButton("Oui", (dialog, which) -> {
-                            controller.deleteEntry(mapController.getSelectedMarker());
+                            controller.deleteEntry((Marker) mapController.getSelectedObject());
                             clearFocus(inflatedInfo.findViewById(R.id.txtInfoName));
-                            switchNavView(NAV_FOLDED);;
+                            switchNavView(NAV_FOLDED);
                         });
 
                         builder.setNegativeButton("Non", (dialog, which) -> dialog.dismiss());
@@ -667,36 +752,8 @@ public class ApplyUIListeners {
                     }
             );
         });
-    }
 
-    public void onBackPressed() {
-        switch (navState) {
-            case NAV_FOLDED: {
-                ((Activity) context).finish();
-                System.exit(0);
-                return;
-            }
-
-            case NAV_EXPANDED: {
-                if (placer != null) {
-                    placer.removePolygon();
-                    switchNavView(NAV_CHANGED);
-                    return;
-                }
-                switchNavView(NAV_FOLDED);
-                break;
-            }
-            case NAV_CHANGED: {
-                switchNavView(NAV_FOLDED);
-                placer.cancel();
-                break;
-            }
-        }
-    }
-
-    public void applyPolygonListener() {
         mapController.setOnPolygonClickListener(polygon -> {
-            Shortcuts.log("plyogin cliecked");
             toggleExpandedViewsVisibility(inflatedInfo);
             switchNavView(NAV_EXPANDED);
 
@@ -726,7 +783,7 @@ public class ApplyUIListeners {
             });
 
             inflatedInfo.findViewById(R.id.btnInfoCancel).setOnClickListener(v1 -> {
-                switchNavView(NAV_FOLDED);;
+                switchNavView(NAV_FOLDED);
                 clearFocus(inflatedInfo.findViewById(R.id.txtInfoName));
             });
 
@@ -737,9 +794,9 @@ public class ApplyUIListeners {
                         builder.setMessage("Etes-vous sûr ?");
 
                         builder.setPositiveButton("Oui", (dialog, which) -> {
-                            controller.deleteEntry(mapController.getSelectedMarker());
+                            controller.deleteEntry((Polygon) mapController.getSelectedObject());
                             clearFocus(inflatedInfo.findViewById(R.id.txtInfoName));
-                            switchNavView(NAV_FOLDED);;
+                            switchNavView(NAV_FOLDED);
                             switchInfoDraggable.setVisibility(View.VISIBLE);
                         });
 
@@ -751,6 +808,154 @@ public class ApplyUIListeners {
                     }
             );
         });
+
+        mapController.setOnPolylineClickListener(polyline -> {
+            toggleExpandedViewsVisibility(inflatedInfo);
+            switchNavView(NAV_EXPANDED);
+
+            View switchInfoDraggable = inflatedInfo.findViewById(R.id.switchInfoDraggable);
+            switchInfoDraggable.setVisibility(View.GONE);
+
+            String l = ((Model) Objects.requireNonNull(polyline.getTag())).getLabel();
+            String label = Objects.requireNonNull(l).isEmpty() ? "Sans nom" : l;
+
+            ((TextView)inflatedInfo.findViewById(R.id.txtInfoLabel)).setText(
+                    label
+            );
+
+            EditText txtInfoName = inflatedInfo.findViewById(R.id.txtInfoName);
+            txtInfoName.setText(
+                    label
+            );
+            requestFocus(txtInfoName);
+
+            inflatedInfo.findViewById(R.id.btnInfoUpdate).setOnClickListener(v -> {
+                String newLabel = txtInfoName.getText().toString();
+                switchInfoDraggable.setVisibility(View.VISIBLE);
+
+                controller.updateEntry(polyline, newLabel);
+                switchNavView(NAV_FOLDED);
+                clearFocus(inflatedInfo.findViewById(R.id.txtInfoName));
+            });
+
+            inflatedInfo.findViewById(R.id.btnInfoCancel).setOnClickListener(v1 -> {
+                switchNavView(NAV_FOLDED);
+                clearFocus(inflatedInfo.findViewById(R.id.txtInfoName));
+            });
+
+            inflatedInfo.findViewById(R.id.btnDeleteInfo).setOnClickListener(
+                    v -> {
+                        AlertDialog.Builder builder = new AlertDialog.Builder(context);
+                        builder.setTitle("Confirmer");
+                        builder.setMessage("Etes-vous sûr ?");
+
+                        builder.setPositiveButton("Oui", (dialog, which) -> {
+                            controller.deleteEntry((Polyline) mapController.getSelectedObject());
+                            clearFocus(inflatedInfo.findViewById(R.id.txtInfoName));
+                            switchNavView(NAV_FOLDED);
+                            switchInfoDraggable.setVisibility(View.VISIBLE);
+                        });
+
+                        builder.setNegativeButton("Non", (dialog, which) -> dialog.dismiss());
+
+                        AlertDialog alert = builder.create();
+                        alert.show();
+
+                    }
+            );
+        });
+
     }
+
+    public void onBackPressed() {
+        switch (navState) {
+            case NAV_FOLDED: {
+                ((Activity) context).finish();
+                System.exit(0);
+                return;
+            }
+
+            case NAV_EXPANDED: {
+                if (placer != null) {
+                    placer.removeShape();
+                    switchNavView(NAV_CHANGED);
+                    return;
+                }
+                switchNavView(NAV_FOLDED);
+                break;
+            }
+            case NAV_CHANGED: {
+                switchNavView(NAV_FOLDED);
+                placer.cancel();
+                break;
+            }
+        }
+    }
+
+
+    /**
+     * Method that makes sure the navigation bar has rounded corners that fit the device's and that
+     * the search bar isn't under the camera cutout
+     *
+     * @param v      The view applying window insets
+     * @param insets The insets to apply
+     * @return WindowInsetsCompat
+     */
+    @NonNull
+    @Override
+    public WindowInsetsCompat onApplyWindowInsets(@NonNull View v, @NonNull WindowInsetsCompat insets) {
+
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
+            WindowInsets windowInsets = window.getDecorView().getRootWindowInsets();
+
+            RoundedCorner roundedCorners = windowInsets.getRoundedCorner(RoundedCorner.POSITION_TOP_LEFT);
+
+            DisplayCutout displayCutout = Objects.requireNonNull(context.getDisplay()).getCutout();
+
+            assert roundedCorners != null;
+            assert displayCutout != null;
+
+            ShapeAppearanceModel fullyRoundedCorners = new ShapeAppearanceModel().toBuilder()
+                    .setAllCorners(CornerFamily.ROUNDED, 99999)
+                    .build();
+
+
+//            navView.setBackgroundColor(Color.parseColor("#FFFFFF"));
+            ShapeAppearanceModel fitDeviceCorners = new ShapeAppearanceModel().toBuilder()
+                    .setAllCorners(CornerFamily.ROUNDED, roundedCorners.getRadius() - 50)
+                    .build();
+
+            TypedValue typedValue = new TypedValue();
+            Resources.Theme theme = context.getTheme();
+            theme.resolveAttribute(com.google.android.material.R.attr.colorPrimary, typedValue, true);
+            @ColorInt int color = typedValue.data;
+
+
+            MaterialShapeDrawable txtSearchShapeDrawable = new MaterialShapeDrawable(fullyRoundedCorners);
+            txtSearchShapeDrawable.setFillColor(ColorStateList.valueOf(color));
+            findViewById(R.id.txtSearch).setBackground(txtSearchShapeDrawable);
+
+            MaterialShapeDrawable loadingBarBackground = new MaterialShapeDrawable(fullyRoundedCorners);
+            loadingBarBackground.setFillColor(ColorStateList.valueOf(color));
+            findViewById(R.id.loadingBar).setBackground(loadingBarBackground);
+
+            MaterialShapeDrawable iBtnCurrentLocationShapeDrawable = new MaterialShapeDrawable(fullyRoundedCorners);
+            iBtnCurrentLocationShapeDrawable.setFillColor(ColorStateList.valueOf(color));
+            findViewById(R.id.imgBtnCurrentLocation).setBackground(iBtnCurrentLocationShapeDrawable);
+
+            MaterialShapeDrawable navViewShapeDrawable = new MaterialShapeDrawable(fitDeviceCorners);
+            navViewShapeDrawable.setFillColor(ColorStateList.valueOf(color));
+            findViewById(R.id.navView).setBackground(navViewShapeDrawable);
+
+
+            ViewGroup.MarginLayoutParams layoutParams = (ViewGroup.MarginLayoutParams) txtSearch.getLayoutParams();
+            layoutParams.topMargin = displayCutout.getSafeInsetTop() + 25;
+            txtSearch.setLayoutParams(layoutParams);
+        }
+
+        return insets;
+    }
+
+
 }
 

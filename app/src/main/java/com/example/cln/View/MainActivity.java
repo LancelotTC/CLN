@@ -1,4 +1,4 @@
-package com.example.cln;
+package com.example.cln.View;
 
 import android.Manifest;
 import android.content.Context;
@@ -26,7 +26,9 @@ import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.fragment.app.FragmentActivity;
 
-import com.example.cln.Utils.Shortcuts;
+import com.example.cln.Controllers.Controller;
+import com.example.cln.Controllers.MapController;
+import com.example.cln.R;
 import com.example.cln.View.ApplyUIListeners;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
@@ -41,8 +43,7 @@ import java.util.Objects;
 /**
  * Main entry point for app
  */
-public class MainActivity extends AppCompatActivity implements OnMapReadyCallback,
-androidx.core.view.OnApplyWindowInsetsListener, AdapterView.OnItemSelectedListener,
+public class MainActivity extends AppCompatActivity implements OnMapReadyCallback, AdapterView.OnItemSelectedListener,
 ActivityCompat.OnRequestPermissionsResultCallback {
     /**
      * Controller instance
@@ -54,11 +55,11 @@ ActivityCompat.OnRequestPermissionsResultCallback {
      */
     private MapController mapController;
 
-    /**
-     * Window instance used to get the window insets and get the corner radius of the device to
-     * adapt the UI.
-     */
-    private Window window;
+//    /**
+//     * Window instance used to get the window insets and get the corner radius of the device to
+//     * adapt the UI.
+//     */
+//    private Window window;
 
     /**
      * Used to open or close the soft keyboard view.
@@ -67,10 +68,6 @@ ActivityCompat.OnRequestPermissionsResultCallback {
 
     private ApplyUIListeners applyUIListeners;
 
-    /**
-     * Search address widget
-     */
-    private EditText txtSearch;
 //
 //    /**
 //     * Navigation bar widget
@@ -155,7 +152,7 @@ ActivityCompat.OnRequestPermissionsResultCallback {
         // set global variables
         defineGlobals();
 
-        ViewCompat.setOnApplyWindowInsetsListener(window.getDecorView(), this);
+//        ViewCompat.setOnApplyWindowInsetsListener(window.getDecorView(), this);
 
 
 
@@ -244,12 +241,11 @@ ActivityCompat.OnRequestPermissionsResultCallback {
         mapController = MapController.getInstance(this);
 
 
-        window = getWindow();
+//        window = getWindow();
 
         inputMethodManager = (InputMethodManager)getSystemService(Context.INPUT_METHOD_SERVICE);
         applyUIListeners = new ApplyUIListeners(this);
 
-        txtSearch = findViewById(R.id.txtSearch);
 //
 //        navView = findViewById(R.id.navView);
 //        foldedNavView = findViewById(R.id.foldedNavView);
@@ -592,60 +588,60 @@ ActivityCompat.OnRequestPermissionsResultCallback {
      * @param insets The insets to apply
      * @return WindowInsetsCompat
      */
-    @NonNull
-    @Override
-    public WindowInsetsCompat onApplyWindowInsets(@NonNull View v, @NonNull WindowInsetsCompat insets) {
-
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
-            WindowInsets windowInsets = window.getDecorView().getRootWindowInsets();
-
-            RoundedCorner roundedCorners = windowInsets.getRoundedCorner(RoundedCorner.POSITION_TOP_LEFT);
-
-            DisplayCutout displayCutout = Objects.requireNonNull(getDisplay()).getCutout();
-
-            assert roundedCorners != null;
-            assert displayCutout != null;
-
-            ShapeAppearanceModel fullyRoundedCorners = new ShapeAppearanceModel().toBuilder()
-                    .setAllCorners(CornerFamily.ROUNDED, 99999)
-                    .build();
-
-
-//            navView.setBackgroundColor(Color.parseColor("#FFFFFF"));
-            ShapeAppearanceModel fitDeviceCorners = new ShapeAppearanceModel().toBuilder()
-                    .setAllCorners(CornerFamily.ROUNDED, roundedCorners.getRadius() - 50)
-                    .build();
-
-            TypedValue typedValue = new TypedValue();
-            Resources.Theme theme = this.getTheme();
-            theme.resolveAttribute(com.google.android.material.R.attr.colorPrimary, typedValue, true);
-            @ColorInt int color = typedValue.data;
-
-
-            MaterialShapeDrawable txtSearchshapeDrawable = new MaterialShapeDrawable(fullyRoundedCorners);
-            txtSearchshapeDrawable.setFillColor(ColorStateList.valueOf(color));
-            findViewById(R.id.txtSearch).setBackground(txtSearchshapeDrawable);
-
-            MaterialShapeDrawable loadingBarBackground = new MaterialShapeDrawable(fullyRoundedCorners);
-            loadingBarBackground.setFillColor(ColorStateList.valueOf(color));
-            findViewById(R.id.loadingBar).setBackground(loadingBarBackground);
-
-            MaterialShapeDrawable ibtnCurrentLocationshapeDrawable = new MaterialShapeDrawable(fullyRoundedCorners);
-            ibtnCurrentLocationshapeDrawable.setFillColor(ColorStateList.valueOf(color));
-            findViewById(R.id.imgBtnCurrentLocation).setBackground(ibtnCurrentLocationshapeDrawable);
-
-            MaterialShapeDrawable navViewshapeDrawable = new MaterialShapeDrawable(fitDeviceCorners);
-            navViewshapeDrawable.setFillColor(ColorStateList.valueOf(color));
-            findViewById(R.id.navView).setBackground(navViewshapeDrawable);
-
-
-            ViewGroup.MarginLayoutParams layoutParams = (ViewGroup.MarginLayoutParams) txtSearch.getLayoutParams();
-            layoutParams.topMargin = displayCutout.getSafeInsetTop() + 25;
-            txtSearch.setLayoutParams(layoutParams);
-        }
-
-        return insets;
-    }
+//    @NonNull
+//    @Override
+//    public WindowInsetsCompat onApplyWindowInsets(@NonNull View v, @NonNull WindowInsetsCompat insets) {
+//
+//        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
+//            WindowInsets windowInsets = window.getDecorView().getRootWindowInsets();
+//
+//            RoundedCorner roundedCorners = windowInsets.getRoundedCorner(RoundedCorner.POSITION_TOP_LEFT);
+//
+//            DisplayCutout displayCutout = Objects.requireNonNull(getDisplay()).getCutout();
+//
+//            assert roundedCorners != null;
+//            assert displayCutout != null;
+//
+//            ShapeAppearanceModel fullyRoundedCorners = new ShapeAppearanceModel().toBuilder()
+//                    .setAllCorners(CornerFamily.ROUNDED, 99999)
+//                    .build();
+//
+//
+////            navView.setBackgroundColor(Color.parseColor("#FFFFFF"));
+//            ShapeAppearanceModel fitDeviceCorners = new ShapeAppearanceModel().toBuilder()
+//                    .setAllCorners(CornerFamily.ROUNDED, roundedCorners.getRadius() - 50)
+//                    .build();
+//
+//            TypedValue typedValue = new TypedValue();
+//            Resources.Theme theme = this.getTheme();
+//            theme.resolveAttribute(com.google.android.material.R.attr.colorPrimary, typedValue, true);
+//            @ColorInt int color = typedValue.data;
+//
+//
+//            MaterialShapeDrawable txtSearchshapeDrawable = new MaterialShapeDrawable(fullyRoundedCorners);
+//            txtSearchshapeDrawable.setFillColor(ColorStateList.valueOf(color));
+//            findViewById(R.id.txtSearch).setBackground(txtSearchshapeDrawable);
+//
+//            MaterialShapeDrawable loadingBarBackground = new MaterialShapeDrawable(fullyRoundedCorners);
+//            loadingBarBackground.setFillColor(ColorStateList.valueOf(color));
+//            findViewById(R.id.loadingBar).setBackground(loadingBarBackground);
+//
+//            MaterialShapeDrawable ibtnCurrentLocationshapeDrawable = new MaterialShapeDrawable(fullyRoundedCorners);
+//            ibtnCurrentLocationshapeDrawable.setFillColor(ColorStateList.valueOf(color));
+//            findViewById(R.id.imgBtnCurrentLocation).setBackground(ibtnCurrentLocationshapeDrawable);
+//
+//            MaterialShapeDrawable navViewshapeDrawable = new MaterialShapeDrawable(fitDeviceCorners);
+//            navViewshapeDrawable.setFillColor(ColorStateList.valueOf(color));
+//            findViewById(R.id.navView).setBackground(navViewshapeDrawable);
+//
+//
+//            ViewGroup.MarginLayoutParams layoutParams = (ViewGroup.MarginLayoutParams) txtSearch.getLayoutParams();
+//            layoutParams.topMargin = displayCutout.getSafeInsetTop() + 25;
+//            txtSearch.setLayoutParams(layoutParams);
+//        }
+//
+//        return insets;
+//    }
 
     /**
      * Method that is called once the map is ready. Repopulates the map and sets map-related listeners.
@@ -691,7 +687,7 @@ ActivityCompat.OnRequestPermissionsResultCallback {
 //
 //                boolean draggable = !((Switch)inflatedInfo.findViewById(R.id.switchInfoDraggable)).isChecked();
 //
-//                controller.updateEntry(mapController.getSelectedMarker(), label, draggable);
+//                controller.updateEntry(mapController.getSelectedObject(), label, draggable);
 //                foldNavView();
 //                clearFocus(inflatedInfo.findViewById(R.id.txtInfoName));
 //            });
@@ -707,7 +703,7 @@ ActivityCompat.OnRequestPermissionsResultCallback {
 //                        builder.setTitle("Confirmer");
 //                        builder.setMessage("Etes-vous sûr ?");
 //                        builder.setPositiveButton("Oui", (dialog, which) -> {
-//                            controller.deleteEntry(mapController.getSelectedMarker());
+//                            controller.deleteEntry(mapController.getSelectedObject());
 //                            clearFocus(inflatedInfo.findViewById(R.id.txtInfoName));
 //                            foldNavView();
 //                        });
@@ -721,9 +717,7 @@ ActivityCompat.OnRequestPermissionsResultCallback {
 //            );
 //        });
         applyUIListeners.applyMapListener();
-        applyUIListeners.applyPolygonListener();
 
-        mapController.setOnPolygonClickListener((polygon -> Shortcuts.log("somethign")));
         mapController.moveCamera(new LatLng(14.65388310, -61.00704925));
         // Folds the menu back to the navigation buttons on map clicked (exits the marker update menu)
 //        Lambda task = this::foldNavView;

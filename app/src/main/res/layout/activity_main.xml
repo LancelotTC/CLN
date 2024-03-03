@@ -7,7 +7,7 @@
     android:layout_height="match_parent"
     android:backgroundTint="?colorPrimary"
     android:clipToPadding="false"
-    tools:context=".MainActivity">
+    tools:context=".View.MainActivity">
 
     <fragment
         android:id="@+id/fragmentMap"

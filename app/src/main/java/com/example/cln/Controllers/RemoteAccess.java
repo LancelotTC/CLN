@@ -1,6 +1,8 @@
-package com.example.cln;
+package com.example.cln.Controllers;
 
 import android.content.Context;
+import android.util.Log;
+import android.widget.Toast;
 
 import com.example.cln.Models.Composter;
 import com.example.cln.Models.Filter;
@@ -8,7 +10,6 @@ import com.example.cln.Models.Model;
 import com.example.cln.Models.Plant;
 import com.example.cln.Models.Tree;
 import com.example.cln.Remote.Request;
-import com.example.cln.Utils.Shortcuts;
 import com.example.cln.Utils.TaskRunner;
 
 import org.json.JSONArray;
@@ -76,7 +77,7 @@ public class RemoteAccess {
      */
     public void getAll() {
         Map<String, String> map = new java.util.HashMap<>();
-        map.put("tables", "*");
+        map.put("tables", "all");
         executeRequest(map, "GET");
     }
 
@@ -93,10 +94,11 @@ public class RemoteAccess {
      * @param model Model to be added
      */
     public void add(Model model) {
-        Shortcuts.log("JSONObject", model.toJSONObject().toString());
+        Log.d("models", model.toJSONObject().toString());
         Map<String, String> map = new java.util.HashMap<>();
         map.put("tables", model.getTableName());
         map.put("data", model.toJSONObject().toString());
+
         executeRequest(map, "POST");
     }
 
@@ -133,7 +135,11 @@ public class RemoteAccess {
      * @throws JSONException Sometimes the response isn't JSON valid.
      */
     public void onGotResponse(String output) throws JSONException {
-        Shortcuts.log("output", output);
+        Log.d("output", output);
+
+        if (output.isEmpty()) {
+            return;
+        }
 
         JSONObject response = new JSONObject(output);
 
@@ -141,19 +147,19 @@ public class RemoteAccess {
         String message = response.getString("message");
 
         // INFO: Other status codes in the 200 range still mean that the request was successful,
-        // especially the 201 which by convention indicates that something was changed (POST).
+        // especially the 201 which by convention indicates that something was changed (POST) (or rather, PUT apparently).
         if (code != 200) {
-            Shortcuts.toast(context, "Error " + code + ": " + message);
-            Shortcuts.log("HTTP Error " + code, message);
+            Log.d("HTTP error " + code, message);
+            Toast.makeText(context, "Error " + code, Toast.LENGTH_SHORT).show();
             return;
         }
+
 
         JSONObject results = new JSONObject(response.getString("result"));
 
 
         switch (response.getString("method")) {
             case "GET":
-                Shortcuts.log(results.toString());
                 getCallback(results);
                 break;
             case "POST":
@@ -168,11 +174,34 @@ public class RemoteAccess {
         }
     }
 
+    /**
+     * Gets all JSONArrays in the result and returns it in an Array.
+     * The purpose of this method is to ensure that the additions of
+     * new tables can be handled easily
+     * @param results
+     * @return returns the Array of JSONArrays
+     * @throws JSONException if any of the tables are not present in the results
+     */
+    private JSONArray[] decomposeTables(JSONObject results) throws JSONException {
+        JSONArray plants = results.getJSONArray("plant");
+        JSONArray trees = results.getJSONArray("tree");
+        JSONArray filters = results.getJSONArray("filter");
+        JSONArray composters = results.getJSONArray("composter");
+
+        return new JSONArray[] {plants, trees, filters, composters};
+    }
+
 
     private void getCallback(JSONObject results) throws JSONException {
         ArrayList<Model> models = new ArrayList<>();
 
 
+        JSONArray[] tables = decomposeTables(results);
+
+        JSONArray plants = tables[0];
+        JSONArray trees = tables[1];
+        JSONArray filters = tables[2];
+        JSONArray composters = tables[3];
 
 //        HashMap<String, Function<JSONObject, Model>> stringToClass = new HashMap<>();
 //
@@ -181,10 +210,6 @@ public class RemoteAccess {
 //        stringToClass.put("filter", Filter::fromJSONObject);
 //        stringToClass.put("composter", Composter::fromJSONObject);
 
-        JSONArray plants = results.getJSONArray("plant");
-        JSONArray trees = results.getJSONArray("fruit_tree");
-        JSONArray filters = results.getJSONArray("filter");
-        JSONArray composters = results.getJSONArray("composter");
 
 //        Shortcuts.log("plants", plants);
 //        Shortcuts.log("trees", trees);
@@ -211,8 +236,28 @@ public class RemoteAccess {
         Controller.getInstance(context).populateMap(models.toArray(new Model[0]));
     }
 
-    private void postCallback(JSONObject results) {
-        Controller.getInstance(context).addEntryCallback(Plant.fromJSONObject(results));
+    private void postCallback(JSONObject results) throws JSONException {
+        Model model;
+        switch (results.getString("model")) {
+            case "plant":
+                model = Plant.fromJSONObject(results);
+                break;
+            case "tree":
+                model = Tree.fromJSONObject(results);
+                break;
+            case "filter":
+                model = Filter.fromJSONObject(results);
+                break;
+            case "composter":
+                model = Composter.fromJSONObject(results);
+                break;
+            default:
+                throw new RuntimeException("(Dev thrown) table name " +
+                        results.getString("model") +
+                        " is none of the 4 Models.");
+        }
+
+        Controller.getInstance(context).addEntryCallback(model);
     }
 
     private void putCallback(JSONObject results) {

@@ -3,31 +3,41 @@ package com.example.cln.Models;
 import com.example.cln.R;
 import com.google.android.gms.maps.model.LatLng;
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-public class Filter extends PointModel {
-    public Filter(String label, LatLng latLng) {
-        super(label, latLng, R.drawable.filter_icon, "filter");
+import java.util.ArrayList;
+
+/**
+ * Filter model
+ */
+public class Filter extends MultiPointModel implements ILine {
+    public Filter(String label, ArrayList<LatLng> latLngs) {
+        super(label, latLngs, R.drawable.filter_icon, "filter");
     }
 
     public static Filter fromJSONObject(JSONObject jsonObject) {
         try {
+            JSONArray JSONpoints = new JSONArray(jsonObject.getString("points"));
+            ArrayList<LatLng> points = new ArrayList<>();
+
+            for (int i=0; i < JSONpoints.length(); i++) {
+                JSONArray coords = JSONpoints.getJSONArray(i);
+                points.add(new LatLng(coords.getDouble(0), coords.getDouble(1)));
+            }
+
             Filter filter = new Filter(
-                    // TODO: change the way location is accessed.
                     jsonObject.getString("label"),
-                    new LatLng(
-                            Double.parseDouble(jsonObject.getString("latitude")),
-                            Double.parseDouble(jsonObject.getString("longitude"))
-                    )
+                    points
             );
 
             filter.setId(Long.parseLong(jsonObject.getString("filter_id")));
-
             return filter;
         } catch (JSONException e) {
             throw new RuntimeException(e);
         }
     }
+
 
 }

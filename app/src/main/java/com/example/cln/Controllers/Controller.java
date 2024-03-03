@@ -1,16 +1,17 @@
-package com.example.cln;
+package com.example.cln.Controllers;
 
 import android.content.Context;
 import android.location.Address;
 import android.location.Geocoder;
+import android.util.Log;
 
-import com.example.cln.Models.AreaModel;
 import com.example.cln.Models.Model;
+import com.example.cln.Models.MultiPointModel;
 import com.example.cln.Models.PointModel;
-import com.example.cln.Utils.Shortcuts;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.Polygon;
+import com.google.android.gms.maps.model.Polyline;
 
 import java.io.IOException;
 import java.util.List;
@@ -43,10 +44,6 @@ public class Controller {
      */
     private final RemoteAccess remoteAccess;
 
-//    private final HashMap<Long, PointModel> pointToMarker;
-//    private final HashMap<Long, AreaModel> areaToMarker;
-
-
 
     /**
      * Private class constructor. Get instance with {#getInstance}
@@ -56,8 +53,6 @@ public class Controller {
         mapController = MapController.getInstance(context);
 //        localAccess = LocalAccess.getInstance(context);
         remoteAccess = RemoteAccess.getInstance(context);
-//        pointToMarker = new HashMap<>();
-//        areaToMarker = new HashMap<>();
     }
 
     /**
@@ -84,6 +79,10 @@ public class Controller {
         remoteAccess.add(model);
     }
 
+    /**
+     * Method that receives the result of the request.
+     * @param model resulting model
+     */
     public void addEntryCallback(Model model) {
         mapController.addObject(model);
     }
@@ -111,7 +110,7 @@ public class Controller {
      */
     public void updatePointModelLocation(Marker marker) {
         if (marker.getTag() == null) {
-            Shortcuts.log("Skipped update",
+            Log.d("Skipped update",
                     "Skipped updating location of marker because its tag was null");
             return;
         }
@@ -119,21 +118,6 @@ public class Controller {
         pointModel.setLatLng(marker.getPosition());
         remoteAccess.update(pointModel);
     }
-
-    /**
-     * Returns the Model associated with the marker
-     * @param marker Marker associated with a Model
-     * @return Model
-     */
-//    public PointModel getPointModel(Marker marker) {
-////        return localAccess.getModel(id);
-//        return pointToMarker.get((Long) marker.getTag());
-//    }
-//
-//    public AreaModel getAreaModel(Polygon polygon) {
-//        return areaToMarker.get((Long) polygon.getTag());
-//    }
-
 
     /**
      * Updates the Model's label and whether the Marker should be draggable.
@@ -145,14 +129,23 @@ public class Controller {
     public void updateEntry(Marker marker, String label, boolean draggable) {
         mapController.updateMarker(marker, label, draggable);
         Model model = (Model) marker.getTag();
+        assert model != null;
         model.setLabel(label);
         remoteAccess.update(model);
     }
 
     public void updateEntry(Polygon polygon, String label) {
-        AreaModel areaModel = (AreaModel) polygon.getTag();
-        areaModel.setLabel(label);
-        remoteAccess.update(areaModel);
+        MultiPointModel multiPointModel = (MultiPointModel) polygon.getTag();
+        assert multiPointModel != null;
+        multiPointModel.setLabel(label);
+        remoteAccess.update(multiPointModel);
+    }
+
+    public void updateEntry(Polyline polyline, String label) {
+        MultiPointModel multiPointModel = (MultiPointModel) polyline.getTag();
+        assert multiPointModel != null;
+        multiPointModel.setLabel(label);
+        remoteAccess.update(multiPointModel);
     }
 
     /**
@@ -165,10 +158,24 @@ public class Controller {
         selectedMarker.remove();
     }
 
-    public void deleteEntry(Polygon polygon) {
+    /**
+     * Deletes the Model associated with the Polygon
+     * @param selectedPolygon Polygon associated with a Model
+     */
+    public void deleteEntry(Polygon selectedPolygon) {
 //        localAccess.deleteEntry(selectedMarker);
-        remoteAccess.delete((Model) Objects.requireNonNull(polygon.getTag()));
-        polygon.remove();
+        remoteAccess.delete((Model) Objects.requireNonNull(selectedPolygon.getTag()));
+        selectedPolygon.remove();
+    }
+
+    /**
+     * Deletes the Model associated with the Polyline
+     * @param selectedPolyline Polyline associated with a Model
+     */
+    public void deleteEntry(Polyline selectedPolyline) {
+//        localAccess.deleteEntry(selectedMarker);
+        remoteAccess.delete((Model) Objects.requireNonNull(selectedPolyline.getTag()));
+        selectedPolyline.remove();
     }
 
     /**
@@ -185,20 +192,17 @@ public class Controller {
             assert addresses.size() > 0;
             LatLng newLocation = new LatLng(addresses.get(0).getLatitude(), addresses.get(0).getLongitude());
 
-            Shortcuts.log("Address",
-                    addresses.get(0).getSubAdminArea() + " getLocality" + // Le Lamentin
-                    addresses.get(0).getPhone() + " getFeatureName" + // 119
-                    addresses.get(0).getFeatureName() + " getThoroughfare" + // Chemin Nestor
-                    addresses.get(0).getThoroughfare() + " getSubThoroughfare" + // 119
-                    addresses.get(0).getSubThoroughfare() + " getLocale"
-            );
+//            Shortcuts.log("Address",
+//                    addresses.get(0).getSubAdminArea() + " getLocality" + // Le Lamentin
+//                    addresses.get(0).getPhone() + " getFeatureName" + // 119
+//                    addresses.get(0).getFeatureName() + " getThoroughfare" + // Chemin Nestor
+//                    addresses.get(0).getThoroughfare() + " getSubThoroughfare" + // 119
+//                    addresses.get(0).getSubThoroughfare() + " getLocale"
+//            );
             //            mapController.addMarker(newLocation, address, R.drawable.location_icon);
             mapController.moveCamera(newLocation);
         } catch (IOException | AssertionError e) {
-            Shortcuts.log("Find address error", e);
+            e.printStackTrace();
         }
-
-
-
     }
 }

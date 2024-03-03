@@ -6,6 +6,9 @@ import com.google.android.gms.maps.model.LatLng;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+/**
+ * Tree Model
+ */
 public class Tree extends PointModel {
 
     public Tree(String label, LatLng latLng) {
@@ -23,7 +26,7 @@ public class Tree extends PointModel {
                     )
             );
 
-            tree.setId(Long.parseLong(jsonObject.getString("fruit_tree_id")));
+            tree.setId(Long.parseLong(jsonObject.getString("tree_id")));
             return tree;
         } catch (JSONException e) {
             throw new RuntimeException(e);

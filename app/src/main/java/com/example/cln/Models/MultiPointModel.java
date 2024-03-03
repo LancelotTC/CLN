@@ -8,13 +8,15 @@ import org.json.JSONObject;
 
 import java.util.ArrayList;
 
-public class AreaModel extends Model {
-
-    private int quantity;
+/**
+ * Model child class which represents objects which have more than 1 set of coordinates.
+ * This includes polygons and poly-lines.
+ */
+public class MultiPointModel extends Model {
 
     private ArrayList<LatLng> latLngs;
 
-    public AreaModel(String label, ArrayList<LatLng> latLngs, Integer resourceId, String tableName) {
+    public MultiPointModel(String label, ArrayList<LatLng> latLngs, Integer resourceId, String tableName) {
         super(label, resourceId, tableName);
         this.latLngs = latLngs;
     }
@@ -31,8 +33,6 @@ public class AreaModel extends Model {
         JSONObject jsonObject = super.toJSONObject();
 
         try {
-            jsonObject.put("quantity", quantity);
-
             ArrayList<Double[]> positions = new ArrayList<>();
             for (LatLng latLng : latLngs) {
                 positions.add(new Double[] {latLng.latitude, latLng.longitude});

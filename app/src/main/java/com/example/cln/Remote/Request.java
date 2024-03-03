@@ -1,8 +1,7 @@
 package com.example.cln.Remote;
 
 import android.os.Build;
-
-import com.example.cln.Utils.Shortcuts;
+import android.util.Log;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -14,12 +13,19 @@ import java.net.URLEncoder;
 import java.util.Map;
 import java.util.concurrent.Callable;
 
+/**
+ * Object that makes a request
+ */
 public class Request implements Callable<String> {
     private final String METHOD;
     private String response = "";
     private final StringBuilder requestParameters = new StringBuilder();
-    private final String requestUrl = "http://10.0.2.2/cln/clnserver.php";
 
+    /**
+     * Constructor that mainly formats the parameters.
+     * @param parameters URL parameters
+     * @param METHOD Request method
+     */
     public Request(Map<String, String> parameters, String METHOD) {
         super();
         this.METHOD = METHOD;
@@ -53,28 +59,25 @@ public class Request implements Callable<String> {
 //        }
 //    }
 
+    /**
+     * Method that launches the requests and returns the response
+     * @return The response of the request
+     */
     @Override
     public String call() {
         System.setProperty("http.keepAlive", "false");
-//        PrintWriter writer = null;
         BufferedReader reader = null;
 
         try {
-            Shortcuts.log("Requested URL", requestUrl + "?"+ requestParameters);
+            //    private final String requestUrl = "http://10.0.2.2/cln/clnserver.php";
+            String requestUrl = "http://20240228t184156-dot-cafelumierenoire.ue.r.appspot.com/home/lancelot_tariot_camille/CLNREST/index.php";
+            Log.d("Requested URL", requestUrl + "?"+ requestParameters);
+
             URL url = new URL(requestUrl + "?"+ requestParameters);
 
             HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-//            connection.setDoOutput(true);
 
             connection.setRequestMethod(METHOD);
-//            connection.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
-//            connection.setFixedLengthStreamingMode(requestParameters.toString().getBytes().length);
-//            connection.setUseCaches(false);
-
-//            writer = new PrintWriter(connection.getOutputStream());
-//            writer.print(requestParameters);
-//            writer.flush();
-
             reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
 
             // get last line of response
@@ -83,13 +86,8 @@ public class Request implements Callable<String> {
                 response = currentLine;
             }
         } catch (Exception e) {
-            Shortcuts.log("Error in Request", e.toString());
+            Log.d("Error in Request", e.toString());
         } finally {
-//            try {
-//                assert writer != null;
-//                writer.close();
-//            } catch (NullPointerException ignored) {}
-
             try {
                 assert reader != null;
                 reader.close();
@@ -97,6 +95,7 @@ public class Request implements Callable<String> {
         }
 
         response = response.replace("</br>", "");
+        Log.d("response", response);
         return response;
     }
 }

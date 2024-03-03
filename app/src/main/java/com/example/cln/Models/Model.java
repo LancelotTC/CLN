@@ -3,7 +3,14 @@ package com.example.cln.Models;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+/**
+ * Base class for both PointModel and MultiPointModel
+ */
 public abstract class Model {
+    /**
+     * id corresponding to the database. Object should be created AND associated with a map object
+     * after the db insert is done.
+     */
     private Long id;
     private String label;
     private Integer resourceId;
@@ -44,6 +51,10 @@ public abstract class Model {
         this.label = label;
     }
 
+    /**
+     * Creates a JSONobject representation of the Model.
+     * @return JSONObject
+     */
     public JSONObject toJSONObject() {
         JSONObject jsonObject = new JSONObject();
         try {

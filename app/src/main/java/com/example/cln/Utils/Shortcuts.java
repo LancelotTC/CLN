@@ -4,7 +4,22 @@ import android.content.Context;
 import android.util.Log;
 import android.widget.Toast;
 
+/**
+ * Convenient class that groups both logs and toast together. Not really conventional so
+ * I removed its usages.
+ */
 public class Shortcuts {
+
+    public static void broadcast(Context context, String tag, String message) {
+        Shortcuts.log(tag, message);
+        Shortcuts.toast(context, message);
+    }
+
+    public static void broadcast(Context context, String message) {
+        Shortcuts.log(message);
+        Shortcuts.toast(context, message);
+    }
+
     public static void log(String message) {
         Log.d("placeholder-message", message);
     }

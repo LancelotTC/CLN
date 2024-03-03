@@ -1,4 +1,4 @@
-package com.example.cln;
+package com.example.cln.Controllers;
 
 //import static androidx.appcompat.graphics.drawable.DrawableContainerCompat.Api21Impl.getResources;
 
@@ -17,6 +17,7 @@ import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Build;
+import android.util.DisplayMetrics;
 import android.util.Log;
 import android.util.TypedValue;
 
@@ -25,11 +26,12 @@ import androidx.annotation.NonNull;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
-import com.example.cln.Models.AreaModel;
+import com.example.cln.Models.IArea;
+import com.example.cln.Models.ILine;
 import com.example.cln.Models.Model;
+import com.example.cln.Models.MultiPointModel;
 import com.example.cln.Models.PointModel;
-import com.example.cln.Utils.Shortcuts;
-import com.example.cln.Utils.Tools;
+import com.example.cln.R;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.CameraUpdateFactory;
@@ -41,6 +43,8 @@ import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.Polygon;
 import com.google.android.gms.maps.model.PolygonOptions;
+import com.google.android.gms.maps.model.Polyline;
+import com.google.android.gms.maps.model.PolylineOptions;
 import com.google.android.gms.tasks.Task;
 
 import java.util.Objects;
@@ -87,7 +91,7 @@ public class MapController {
     /**
      * Stores the selected marker on the map or null if it doesn't exist
      */
-    private Marker selectedMarker = null;
+    private Object selectedObject = null;
 
     /**
      * Maximum zoom allowed by the Google Map API depending on the map
@@ -202,9 +206,9 @@ public class MapController {
      * Returns the selected marker on the map or null if it doesn't exist
      * @return Marker
      */
-    public Marker getSelectedMarker() {
-        Log.d("selectedMarker", "Attempted to get selectedMarker" + selectedMarker);
-        return selectedMarker;
+    public Object getSelectedObject() {
+        Log.d("selectedMarker", "Attempted to get selectedMarker" + selectedObject);
+        return selectedObject;
     }
 
 
@@ -306,8 +310,6 @@ public class MapController {
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             locationManager.getCurrentLocation(LocationManager.GPS_PROVIDER, null, command -> {}, l -> {
-                Shortcuts.log("location", l.getAccuracy() + " " + l);
-                Shortcuts.toast(context, l.getAccuracy() + " " + l);
             });
         }
         locationManager.requestSingleUpdate(LocationManager.GPS_PROVIDER, new LocationListener() {
@@ -351,12 +353,22 @@ public class MapController {
         return BitmapDescriptorFactory.fromBitmap(bitmap);
     }
 
+    /**
+     * Converts dp to pixels
+     * @param dp Dp number
+     * @param context context
+     * @return the amount of pixels corresponding to the dp.
+     */
+    private static float convertDpToPixel(float dp, Context context){
+        return dp * ((float) context.getResources().getDisplayMetrics().densityDpi / DisplayMetrics.DENSITY_DEFAULT);
+    }
+
     private BitmapDescriptor getBitmapDescriptor(int id) {
         Drawable vectorDrawable = context.getDrawable(id);
 
 
-        int h = ((int) Tools.convertDpToPixel(42, context));
-        int w = ((int) Tools.convertDpToPixel(25, context));
+        int h = ((int) convertDpToPixel(42, context));
+        int w = ((int) convertDpToPixel(25, context));
         assert vectorDrawable != null;
         vectorDrawable.setBounds(0, 0, w, h);
 
@@ -433,7 +445,7 @@ public class MapController {
     /**
      * Adds a polygon to the map
      * @param polygonOptions PolygonOptions type
-     * @return Polygon
+     * @return The Polygon that was added to the map
      */
     public Polygon addPolygon(PolygonOptions polygonOptions) {
         TypedValue typedValue = new TypedValue();
@@ -443,55 +455,88 @@ public class MapController {
 
         polygonOptions.fillColor(color);
         polygonOptions.fillColor(color);
+        polygonOptions.clickable(true);
         return googleMap.addPolygon(polygonOptions);
     }
 
-    public Polygon addPolygon(AreaModel areaModel) {
+    /**
+     * Adds a polygon to the map
+     * @param multiPointModel
+     * @return The polygon that was added to the map
+     */
+    public Polygon addPolygon(MultiPointModel multiPointModel) {
         PolygonOptions polygonOptions = new PolygonOptions();
-        polygonOptions.addAll(areaModel.getLatLngs());
+        polygonOptions.addAll(multiPointModel.getLatLngs());
         return addPolygon(polygonOptions);
     }
 
+    /**
+     * Adds a polyline to the map
+     * @param polylineOptions PolylineOptions type
+     * @return The Polyline that was added to the map
+     */
+    public Polyline addPolyline(PolylineOptions polylineOptions) {
+        TypedValue typedValue = new TypedValue();
+        Resources.Theme theme = context.getTheme();
+        theme.resolveAttribute(com.google.android.material.R.attr.colorPrimary, typedValue, true);
+        @ColorInt int color = typedValue.data;
+
+
+        polylineOptions.color(color);
+        polylineOptions.width(25);
+        polylineOptions.clickable(true);
+        return googleMap.addPolyline(polylineOptions);
+    }
 
     /**
-     * Defines the setOnMarkerClickListener listener. The method content can't be added to the
-     * MainActivity.this.setListeners method because we need the googleMap instance, and it's more
-     * self-explanatory to make a separate method for this, even though the setting up of the
-     * MapController gets more complex because whichever method needs to be called and when is not
-     * exactly clear from a new dev perspective. On the other hand, condensing all method calls
-     * into one is obviously not a solution either.
-     * @param consumer Consumer type that will be called when the listener gets triggered
-     *                 (when the marker is clicked)
+     * Adds a polyline to the map
+     * @param polyline MultiPointModel type
+     * @return The Polyline that was added to the map
+     */
+    public Polyline addPolyline(MultiPointModel polyline) {
+        PolylineOptions polylineOptions = new PolylineOptions();
+        polylineOptions.addAll(polyline.getLatLngs());
+        return addPolyline(polylineOptions);
+    }
+
+    /**
+     * Defines the setOnMapClickListener listener.
+     * @param func - Consumer that accepts a LatLng.
+     */
+    public void setOnMapClickListener(Consumer<LatLng> func) {
+        googleMap.setOnMapClickListener(latLng -> {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                func.accept(latLng);
+                selectedObject = null;
+            }
+        });
+        // TODO: reimplement this function
+    }
+    /**
+     * Defines the setOnMarkerClickListener listener.
+     * @param consumer Consumer that accepts a Marker
      */
     public void setOnMarkerClickListener(Consumer<Marker> consumer) {
         googleMap.setOnMarkerClickListener(marker -> {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N && objectsClickable) {
                 consumer.accept(marker);
-                selectedMarker = marker;
+                selectedObject = marker;
             }
             return false;
         });
     }
 
     /**
-     * Defines the setOnMapClickListener listener.
-     * @param func Custom Lambda type that accepts no arguments and returns nothing.
+     * Defines the setOnPolygonClickListener listener.
+     * @param func Consumer that accepts a Polygon.
      */
-    public void setOnMapClickListener(Consumer<LatLng> func) {
-        googleMap.setOnMapClickListener(latLng -> {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-                func.accept(latLng);
-            }
-            selectedMarker = null;
-        });
-        // TODO: reimplement this function
-    }
-
     public void setOnPolygonClickListener(Consumer<Polygon> func) {
         googleMap.setOnPolygonClickListener(polygon -> {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N && objectsClickable) {
                 func.accept(polygon);
+                selectedObject = polygon;
             }
+
 
 
 //            Shortcuts.toast(context, polygon.getPoints());
@@ -513,6 +558,21 @@ public class MapController {
 //            points.forEach();
         });
     }
+
+    /**
+     * Defines the setOnPolylineClickListener listener.
+     * @param func Consumer that accepts a Polyline.
+     */
+    public void setOnPolylineClickListener(Consumer<Polyline> func) {
+        googleMap.setOnPolylineClickListener(polyline -> {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N && objectsClickable) {
+                func.accept(polyline);
+                selectedObject = polyline;
+            }
+        });
+
+    }
+
 
     public void releaseContext() {
         context = null;
@@ -545,18 +605,34 @@ public class MapController {
 
     }
 
+    /**
+     * Set whether objects sur as markers or shapes should be clickable.
+     * @param objectsClickable by default true
+     */
     public void setObjectsClickable(boolean objectsClickable) {
         this.objectsClickable = objectsClickable;
     }
 
+    /**
+     * Adds an object to the map, whether a Marker, a Polygon or a Polyline
+     * @param model Model
+     */
     public void addObject(Model model) {
         if (model instanceof PointModel) {
             Marker marker = addMarker((PointModel) model);
             marker.setTag(model);
+            return;
+        } else if (model instanceof MultiPointModel) {
+            if (model instanceof ILine) {
+                Polyline polyline = addPolyline((MultiPointModel) model);
+                polyline.setTag(model);
+            } else if (model instanceof IArea) {
+                Polygon polygon = addPolygon((MultiPointModel) model);
+                polygon.setTag(model);
+            }
+            return;
         }
-        else if (model instanceof AreaModel) {
-            Polygon polygon = addPolygon((AreaModel) model);
-            polygon.setTag(model);
-        }
+
+        throw new RuntimeException("Cannot add Object of type " + model.getClass());
     }
 }

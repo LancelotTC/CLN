@@ -3,8 +3,6 @@ package com.example.cln.Utils;
 import android.os.Handler;
 import android.os.Looper;
 
-import com.example.cln.Utils.Shortcuts;
-
 import org.json.JSONException;
 
 import java.util.concurrent.Callable;
@@ -32,8 +30,12 @@ public class TaskRunner <R> {
     public TaskRunner(Callback<R> callback) {
         super();
         this.callback = callback;
-    }
+        }
 
+    /**
+     * Calls the callable asynchronously
+     * @param callable callable object
+     */
     public void executeAsync(Callable<R> callable) {
         executor.execute(() -> {
             final R result;
@@ -44,9 +46,8 @@ public class TaskRunner <R> {
             }
             handler.post(() -> {
                 try {
-                    Shortcuts.log("HTTP result", result);
                     callback.onComplete(result);
-                } catch (JSONException e) {
+                } catch (Exception e) {
                     throw new RuntimeException(e);
                 }
             });
